@@ -1,0 +1,32 @@
+"Phrases"
+{
+    "QSR_SoundOnCooldown"
+    {
+        "#format"   "{1:s},{2:s},{3:s},{4:s},{5:s},{6:s},{7:s}"
+        "en"        "{1}'%s' {2}is on cooldown with {3}(%.2fs) {4}left! You can get around this by buying the {5}'No Cooldown' {6}upgrade in the {7}!store"
+    }
+
+    "QSR_NeedSpectatorUpgrade"
+    {
+        "#format"   "{1:s},{2:s},{3:s},{4:s},{5:s}"
+        "en"        "{1}You need to buy the {2}'Spectator Sounds' {3}upgrade from the {4}!store {5}to play sounds while in spectator!"
+    }
+
+    "QSR_NeedDeathSoundsUpgrade"
+    {
+        "#format"   "{1:s},{2:s},{3:s},{4:s},{5:s}"
+        "en"        "{1}You need to buy the {2}'Death Sounds' {3}upgrade from the {4}!store {5}to play sounds while dead!"
+    }
+
+    "QSR_UnableToCreateTrail"
+    {
+        "#format"   "{1:s},{2:s}"
+        "en"        "{1}We were unable to create your trail! You can attempt to respawn it by using {2}!refresh trail"
+    }
+
+    "QSR_TrailDeleted"
+    {
+        "#format"   "{1:s},{2:s},{3:s},{4:s},{5:s}"
+        "en"        "{1}Your trail has been deleted! You can remake it by opening the trail menu with {2}!trail {3}and using the {4}'Remake' {5}option."
+    }
+}

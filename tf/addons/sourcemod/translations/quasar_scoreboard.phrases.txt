@@ -1,0 +1,32 @@
+"Phrases"
+{
+    "QSR_StatMenuTitle"
+    {
+        "en"    "Stat Menu"
+    }
+
+    "QSR_YourStats"
+    {
+        "en"    "View Your Stats"
+    }
+
+    "QSR_OthersStats"
+    {
+        "en"    "View Others Stats"
+    }
+
+    "QSR_Top10Points"
+    {
+        "en"    "View Highest Scoring Players"
+    }
+
+    "QSR_Top10TotalDamage"
+    {
+        "en"    "View Highest Damaging Players"
+    }
+
+    "QSR_Top10HighestDamage"
+    {
+        "en"    "View Highest Damaging Attacks"
+    }
+}

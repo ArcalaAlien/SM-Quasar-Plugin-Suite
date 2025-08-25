@@ -1,0 +1,92 @@
+"Phrases"
+{
+    "QSR_FetchedPlayerInfo"
+    {
+        "#format"   "{1:s}"
+        "en"        "{1}Successfully fetched your stats from our server!"
+    }
+
+    "QSR_UnableToLogIn"
+    {
+        "#format"   "{1:s},{2:s},{3:s}"
+        "en"        "{1}We were unable to log you into our server to fetch your stats! Please use {2}!qlogin {3}to try again. If the problem still occurs please let a staff member know!"
+    }
+
+    "QSR_UnableToFetchInfo"
+    {
+        "#format"   "{1:s},{2:s},{3:s}"
+        "en"        "{1}We were unable to fetch your info after 5 attempts! Use {2}!qrefresh info {3}to attempt to refresh your info. If the problem still occurs please let a staff member know!"
+    }
+
+    "QSR_UnableToFetchUpgrade"
+    {
+        "#format"   "{1:s},{2:s},{3:s}"
+        "en"        "{1}We were unable to fetch your upgrades after 5 attempts! Use {2}!qrefresh upgrades {3}to attempt to refresh them. If the problem still occurs please let a staff member know!"
+    }
+
+    "QSR_UnableToFetchQSRItems"
+    {
+        "#format"   "{1:s},{2:s},{3:s}"
+        "en"        "{1}We were unable to fetch your tags and trails after 5 attempts! Use {2}!qrefresh qitems {3}to attempt to refresh them. If the problem still occurs please let a staff member know!"
+    }
+
+    "QSR_UnableToFetchSounds"
+    {
+        "#format"   "{1:s},{2:s},{3:s}"
+        "en"        "{1}We were unable to fetch the sounds you have equipped after 5 attempts! Use {2}!qrefresh sounds {3}to attempt to refresh them. If the problem still occurs please let a staff member know!"
+    }
+
+    "QSR_UnableToFetchTFItems"
+    {
+        "#format"   "{1:s},{2:s},{3:s}"
+        "en"        "{1}We were unable to fetch your custom TF2 items after 5 attempts! Use {2}!qrefresh tfitems {3}to attempt to refresh them. If the problem still occurs please let a staff member know!"
+    }
+
+    "QSR_EditingLoadout"
+    {
+        "#format"   "{1:s},{2:d}"
+        "en"        "Editing Loadout: {1} ({2})"
+    }
+
+    "QSR_EquippedLoadout"
+    {
+        "#format"   "{1:s},{2:d}"
+        "en"        "Equipped Loadout: {1} ({2})"
+    }
+
+    "QSR_TagCategory"
+    {
+        "en"    "Tags"
+    }
+
+    "QSR_SoundCategory"
+    {
+        "en"    "Sounds"
+    }
+
+    "QSR_TrailCategory"
+    {
+        "en"    "Trails"
+    }
+
+    "QSR_TFItemsCategory"
+    {
+        "en"    "Custom TF2 Items"
+    }
+
+    "QSR_UpgradeCategory"
+    {
+        "en"    "Upgrades"
+    }
+
+    "QSR_ChatCategory"
+    {
+        "en"    "Chat Items"
+    }
+
+    "QSR_InvalidTarget"
+    {
+        "#format"   "{1:s},{2:s}"
+        "en"        "{1}'{2}' cannot be found, or there are multiple matches!"
+    }
+}

@@ -1,0 +1,38 @@
+"Phrases"
+{
+    "QSR_CreditsAdded"
+    {
+        "#format"   "{1:s},{2:d},{3:s},{4:s},{5:s},{6:s},{7:s},{8:s},{9:d},{10:s}"
+        "en"        "{1}{2} {3}(s) {4}have been put in your {5}{6}{7}! You now have {8}{9} {10}(s)"
+    }
+
+    "QSR_CreditsLost"
+    {
+        "#format"   "{1:s},{2:d},{3:s},{4:s},{5:s},{6:s},{7:s},{8:s},{9:d},{10:s}"
+        "en"        "{1}{2} {3}(s) {4}have been taken from your {5}{6}{7}! You now have {8}{9} {10}(s)"
+    }
+
+    "QSR_PointsAdded"
+    {
+        "#format"   "{1:s},{2:s},{3:.2f},{4:s}{5:s}{6:.2f}"
+        "en"        "{1}You have gained {2}{3} point(s){4}! You now have {5}{6} point(s)"
+    }
+
+    "QSR_PointsLost"
+    {
+        "#format"   "{1:s},{2:s},{3:.2f}{4:s}{5:s}{6:.2f}"
+        "en"        "{1}You have lost {2}{3} point(s){4}! You now have {5}{6} point(s)"
+    }
+
+    "QSR_InsufficientFunds"
+    {
+        "#format"   "{1:s},{2:s},{3:s},{4:s},{5:s},{6:d},{7:s},{8:s},{9:d},{10:d},{11:s}"
+        "en"        "{1}You do not have enough {2}{3}(s){4} to proceed! Have: {5}{6} {7}(s){8}, Need: {9}{10} {11}(s)"
+    }
+
+    "QSR_NoFunds"
+    {
+        "#format"   "{1:s},{2:s},{3:s},{4:s}"
+        "en"        "{1}You have no {2}{3}(s){4}!"
+    }
+}

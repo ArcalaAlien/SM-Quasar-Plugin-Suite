@@ -1,0 +1,150 @@
+"Phrases"
+{
+    "QSR_PrintPlayerCredits"
+    {
+        "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s},{6:s},{7:s},{8:s}"
+        "en"        "{1}You have {2}{3} {4}(s) {5}in your {6}{7}{8}!"
+    }
+
+    "QSR_CreditsNotFetched"
+    {
+        "#format"   "{1:s},{2:s},{3:s},{4:s}"
+        "en"        "{1}Your {2}s have not been fetched yet! Use {3}!qrefresh (or !qrfsh) {4}to attempt to get them again."
+    }
+
+    "QSR_DonatePlayerMenuTitle"
+    {
+        "en"        "Who do you want to donate to?"
+    }
+
+    "QSR_DonateAmountMenuTitle"
+    {
+        "en"        "How much do you want to donate?"
+    }
+
+    "QSR_OverMaximumDonation"
+    {
+        "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s}"
+        "en"        "{1}You have attempted to donate over the maximum limit of {2}{3} {4}(s){5}!"
+    }
+
+    "QSR_UnderMinimumDonation"
+    {
+        "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s}"
+        "en"        "{1}You have attempted to donate under the minimum limit of {2}{3} {4}(s){5}!"
+    }
+
+    "QSR_PlayerDonatedFunds"
+    {
+        "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s},{6:s}"
+        "en"        "{1}You donated {2}{3} {4}(s) {5}to {6}!"
+    }
+
+    "QSR_PlayerRecievedDonation"
+    {
+        "#format"   "{1:s},{2:s},{3:s},{4:d},{5:s},{6:s}"
+        "en"        "{1}{2} donated {3}{4} {5}(s) {6}to you!"
+    }
+
+    "QSR_CannotDropZero"
+    {
+        "#format"   "{1:s},{2:s}"
+        "en"        "{1}You cannot drop zero (0) {2}(s)!"
+    }
+
+    "QSR_DroppedCredits"
+    {
+        "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s}"
+        "en"        "{1}Succesfully dropped {2}{3} {4}(s){5}!"
+    }
+
+    "QSR_NeedDropUpgrade"
+    {
+        "#format"   "{1:s},{2:s}"
+        "en"        "{1}Before you can access the 'Drop Credits' feature, you must buy it from the {2}!store"
+    }
+
+    "QSR_NeedDonateUpgrade"
+    {
+        "#format"   "{1:s},{2:s}"
+        "en"        "{1}Before you can access the 'Donate Credits' feature, you must buy it from the {2}!store"
+    }
+
+    "QSR_PickupOnCooldown"
+    {
+        "#format"   "{1:s},{2:.2f}"
+        "en"        "{1}You cannot make another credit pickup for another {2} second(s)!"
+    }
+
+    "QSR_CreditDropMenuTitle"
+    {
+        "#format"   "{1:s}"
+        "en"        "How many {1}(s) would you like to drop?"
+    }
+
+    "QSR_FailedToMakeCreditDrop"
+    {
+        "#format"   "{1:s},{2:s}"
+        "en"        "{1}We failed to make the pickup, please try again! ERROR: {2}"
+    }
+
+    "QSR_DropAmountTooSmall"
+    {
+        "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s}"
+        "en"        "{1}You must use at least {2}{3} {4}(s) {5}to make a credit pickup!"
+    }
+
+    "QSR_DropAmountTooLarge"
+    {
+        "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s}"
+        "en"        "{1}You cannot use more than {2}{3} {4}(s) {5}to make a credit pickup!"
+    }
+
+    "QSR_CreditDropTextMessage"
+    {
+        "#format"   "{1:d}"
+        "en"        "Amount:   {1}\nTime Left: "
+    }
+
+    "QSR_CreditDropDisappeared"
+    {
+        "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s},{6:s},{7:s},{8:s}"
+        "en"        "{1}Your pickup has disappeared! Your {2}{3} {4}(s) {5}were transferred back to your {6}{7}{8}."
+    }
+
+    "QSR_PickupPlayerNotConnected"
+    {
+        "#format"   "{1:s}"
+        "en"        "{1}The player that dropped these credits has already disconnected and refunded. This pickup will be removed."
+    }
+
+    "QSR_OwnerCannotPickupYet"
+    {
+        "#format"   "{1:s},{2:.2f}"
+        "en"        "{1}You can pick your credits back up in {2} seconds!"
+    }
+
+    "QSR_NotfiyAdminGrantedCredits"
+    {
+        "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s},{6:s}"
+        "en"        "{1}You granted {2}{3} {4}(s) {5}to {6}!"
+    }
+
+    "QSR_NotifyAdminRemovedCredits"
+    {
+        "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s},{6:s},{7:s},{8:s},{9:s}"
+        "en"        "{1}You removed {2}{3} {4}(s) {5}from {6}'s {7}{8}{9}!"
+    }
+
+    "QSR_AdminGrantedYouCredits"
+    {
+        "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s}"
+        "en"        "{1}An admin granted you {2}{3} {4}(s){5}!"
+    }
+
+    "QSR_AdminRemovedYourCredits"
+    {
+        "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s},{6:s},{7:s},{8:s}"
+        "en"        "{1}An admin removed {2}{3} {4}(s){5} from your {6}{7}{8}!"
+    }
+}
