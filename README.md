@@ -1,20 +1,8 @@
-#################################
-#      ____   _    __ _________ #
-#    /  ___\ / \  / /___   ___/ #
-#    \__ \  /   \/ /   /  /     #
-#    ___) |/ /\   /   /  /      #
-#   \_____/_/  \_/   /__/       #
-#        _____   _____          #
-#       / __  \ / __  \         #
-#      / /  |  / /__/ /         #
-#     / /__/  / /___\ \         #
-#    /______ /________/         #
-#                               #
-#################################
+// TODO: Finish Readme
 
-PREREQUISITES:
-    * A MySQL Server
-    * A TF2 Dedicated Server
+1.) Installation
 
-INSTALLATION:
-    TODO
+2.) Required Modules
+
+3.) Optional Modules
+
