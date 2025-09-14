@@ -121,7 +121,7 @@ public void OnConfigsExecuted()
 
 void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-    
+
 }
 
 public void QSR_OnDatabaseConnected(Database& db)
@@ -275,7 +275,7 @@ void Event_OnPlayerDeath(Event event, const char[] name, bool dontBroadcast)
             Call_StartForward(gH_FWD_onPlayerSuicide);
             Call_PushCell(i_attacker);
             Call_Finish();
-        
+
             if (i_assister)
             {
                 Call_StartForward(gH_FWD_playerAssistedSuicide);
@@ -365,7 +365,7 @@ Action CMD_StatsMenu(int client, int args)
             char display[128];
             Menu statMenu = new Menu(Handler_StatMenuHandler);
             statMenu.SetTitle("%T", "QSR_StatMenuTitle");
-            
+
             FormatEx(display, sizeof(display), "%T", "QSR_YourStats", client);
             statMenu.AddItem("0", display);
 
@@ -380,7 +380,7 @@ Action CMD_StatsMenu(int client, int args)
 
             FormatEx(display, sizeof(display), "%T", "QSR_Top10HighestDamage", client);
             statMenu.AddItem("4", display);
-        
+
             statMenu.Display(client, 20);
         }
 

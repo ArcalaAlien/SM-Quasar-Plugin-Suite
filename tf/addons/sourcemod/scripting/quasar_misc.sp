@@ -1,6 +1,7 @@
 #include <sourcemod>
 #include <clientprefs>
 #include <tf2>
+#include <tf2_stocks>
 #include <sdktools>
 #include <sdkhooks>
 
@@ -33,13 +34,18 @@ int gI_breadCount = 0;
 QSRSpInfo gST_playerSPInfo[MAXPLAYERS + 1];
 
 // Third Person
-QSRPov gST_playerPOVs[MAXPLAYERS + 1];
+QSRPov gE_customPOVs[MAXPLAYERS + 1] = {POV_FirstPerson, ...};
+QSRPov gE_defaultPOVs[MAXPLAYERS + 1] = {POV_FirstPerson, ...};
 
 // FOV
-int gI_playerFOV[MAXPLAYERS+1];
+int gI_customFOV[MAXPLAYERS+1]  = {DEFAULT_FOV, ...};
+int gI_defaultFOV[MAXPLAYERS+1] = {DEFAULT_FOV, ...};
 
 // Friendly
-bool gB_isFriendly[MAXPLAYERS + 1];
+bool gB_isFriendly[MAXPLAYERS + 1] = {false, ...};
+
+// Respawn Time
+float gF_respawnTimes[MAXPLAYERS+1] = {0.0, ...};
 
 //* FORWARDS */
 
@@ -61,7 +67,7 @@ Handle gH_FWD_onPlayerWaitForRespawn    = INVALID_HANDLE;
 Handle gH_FWD_onPlayerRespawned         = INVALID_HANDLE;
 
 // Third Person
-Handle gH_FWD_onChangePOV               = INVALID_HANDLE;     
+Handle gH_FWD_onChangePOV               = INVALID_HANDLE;
 
 // FOV
 Handle gH_FWD_onChangeFOV               = INVALID_HANDLE;
@@ -77,6 +83,7 @@ ConVar gH_CVR_useSpawnProtection        = null;
 ConVar gH_CVR_useAutoRestart            = null;
 ConVar gH_CVR_useCustomRespawnTimes     = null;
 ConVar gH_CVR_useThirdPerson            = null;
+ConVar gH_CVR_useCustomFOV              = null;
 ConVar gH_CVR_useFriendly               = null;
 ConVar gH_CVR_teleportBread             = null;
 ConVar gH_CVR_breadPerTele              = null;
@@ -89,6 +96,9 @@ ConVar gH_CVR_respawnTimeMinimum        = null;
 ConVar gH_CVR_respawnTimeMaximum        = null;
 ConVar gH_CVR_respawnTimeDefault        = null;
 ConVar gH_CVR_skipEndingScoreboard      = null;
+ConVar gH_CVR_customFOVMinimum          = null;
+ConVar gH_CVR_customFOVMaximum          = null;
+ConVar gH_CVR_changePOVWhileTaunting    = null;
 
 //* COOKIES */
 Cookie gH_CK_autoEnableFriendly         = null;
@@ -96,6 +106,8 @@ Cookie gH_CK_autoEnableSP               = null;
 Cookie gH_CK_usingCustomRespawn         = null;
 Cookie gH_CK_customRespawnLength        = null;
 Cookie gH_CK_autoEnableTP               = null;
+Cookie gH_CK_customPOV                  = null;
+Cookie gH_CK_customFOV                  = null;
 
 public Plugin myinfo =
 {
@@ -109,7 +121,7 @@ public Plugin myinfo =
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
     // General
-    CreateNative("QSR_UsingMiscModule", Native_QSRUsingMiscModule);
+    CreateNative("QSR_UsingMiscModule",         Native_QSRUsingMiscModule);
 
     // Bread
     CreateNative("QSR_SpawnBreadAtPlayer",      Native_QSRSpawnBreadAtPlayer);
@@ -120,7 +132,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("QSR_ToggleSpawnProtection",   Native_QSRToggleSpawnProtection);
     CreateNative("QSR_GrantSpawnProtection",    Native_QSRGrantSpawnProtection);
     CreateNative("QSR_RemoveSpawnProtection",   Native_QSRRemoveSpawnProtection);
-    
+
     // Respawn Time
     CreateNative("QSR_PlayerHasCRespawnTime",   Native_QSRPlayerHasCRespawnTime)
     CreateNative("QSR_GetPlayerCRespawnTime",   Native_QSRGetPlayerCRespawnTime);
@@ -135,6 +147,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
     // FOV
     CreateNative("QSR_GetPlayerFOV",            Native_QSRGetPlayerFOV);
+    CreateNative("QSR_GetPlayerDefaultFOV",     Native_QSRGetPlayerDefaultFOV);
     CreateNative("QSR_SetPlayerFOV",            Native_QSRSetPlayerFOV);
 
     // Friendly
@@ -161,9 +174,10 @@ public void OnPluginStart()
     gH_FWD_onPlayerToggleSP         = CreateGlobalForward("QSR_OnPlayerToggleSP",       ET_Ignore,  Param_Cell, Param_Cell, Param_Cell);
     gH_FWD_onPlayerWaitForRespawn   = CreateGlobalForward("QSR_OnPlayerWaitForRespawn", ET_Hook,    Param_Cell, Param_Cell, Param_CellByRef);
     gH_FWD_onProtectedPlayerHurt    = CreateGlobalForward("QSR_OnProtectedPlayerHurt",  ET_Ignore,  Param_Cell, Param_Cell, Param_Cell);
+    gH_FWD_onChangeFOV              = CreateGlobalForward("QSR_OnPlayerChangeFOV",      ET_Ignore,  Param_Cell, Param_Cell, Param_Cell)
 
     // Handle ConVars
-    AutoExecConfig_SetFile("plugins.quasar_misc");
+    AutoExecConfig_SetFile("plugin.quasar_misc");
 
     gH_CVR_disableFallDamage        = AutoExecConfig_CreateConVar("sm_quasar_misc_disable_fall_damage",         "0",                "");
     gH_CVR_disableFallDamageNoise   = AutoExecConfig_CreateConVar("sm_quasar_misc_disable_fall_damage_noise",   "1",                "");
@@ -171,6 +185,7 @@ public void OnPluginStart()
     gH_CVR_useAutoRestart           = AutoExecConfig_CreateConVar("sm_quasar_misc_auto_restart_enabled",        "1",                "");
     gH_CVR_useCustomRespawnTimes    = AutoExecConfig_CreateConVar("sm_quasar_misc_allow_custom_respawn_times",  "1",                "");
     gH_CVR_useThirdPerson           = AutoExecConfig_CreateConVar("sm_quasar_misc_third_person_enabled",        "1",                "");
+    gH_CVR_useCustomFOV             = AutoExecConfig_CreateConVar("sm_quasar_misc_custom_fov_enabled",          "1",                "");
     gH_CVR_useFriendly              = AutoExecConfig_CreateConVar("sm_quasar_misc_friendly_enabled",            "1",                "");
     gH_CVR_teleportBread            = AutoExecConfig_CreateConVar("sm_quasar_misc_teleport_bread",              "1",                "");
     gH_CVR_breadPerTele             = AutoExecConfig_CreateConVar("sm_quasar_misc_bread_per_tele",              "2",                "");
@@ -183,6 +198,9 @@ public void OnPluginStart()
     gH_CVR_respawnTimeMaximum       = AutoExecConfig_CreateConVar("sm_quasar_misc_respawn_time_maximum",        "0",                "");
     gH_CVR_respawnTimeDefault       = AutoExecConfig_CreateConVar("sm_quasar_misc_respawn_time_default",        "-1",               "");
     gH_CVR_skipEndingScoreboard     = AutoExecConfig_CreateConVar("sm_quasar_misc_skip_scoreboard",             "1",                "Skips the ending scoreboard allowing for quicker map transitions.");
+    gH_CVR_customFOVMinimum         = AutoExecConfig_CreateConVar("sm_quasar_misc_fov_minimum",                 "10",               "");
+    gH_CVR_customFOVMaximum         = AutoExecConfig_CreateConVar("sm_quasar_misc_fov_maximum",                 "100",              "");
+    gH_CVR_changePOVWhileTaunting   = AutoExecConfig_CreateConVar("sm_quasar_misc_change_pov_while_taunting",   "1",                "");
 
     gH_CVR_disableFallDamage.AddChangeHook(OnConVarChanged);
     gH_CVR_disableFallDamageNoise.AddChangeHook(OnConVarChanged);
@@ -192,18 +210,27 @@ public void OnPluginStart()
     gH_CVR_useThirdPerson.AddChangeHook(OnConVarChanged);
     gH_CVR_useFriendly.AddChangeHook(OnConVarChanged);
     gH_CVR_teleportBread.AddChangeHook(OnConVarChanged);
+    gH_CVR_useCustomFOV.AddChangeHook(OnConVarChanged);
 
     AutoExecConfig_ExecuteFile();
     AutoExecConfig_CleanFile();
 
     // Handle Cookies
-    gH_CK_autoEnableFriendly    = new Cookie("sm_quasar_misc_auto_enable_friendly", "Auto enable friendly mode on spawn?", CookieAccess_Public);
-    gH_CK_autoEnableSP          = new Cookie("sm_quasar_misc_auto_enable_sp",       "Auto enable spawn protection on spawn?", CookieAccess_Public);
-    gH_CK_autoEnableTP          = new Cookie("sm_quasar_misc_auto_enable_tp",       "Auto enable third person on spawn?", CookieAccess_Public);
+    gH_CK_autoEnableFriendly    = new Cookie("sm_quasar_misc_auto_enable_friendly", "Auto enable friendly mode on spawn?",                                      CookieAccess_Public);
+    gH_CK_autoEnableSP          = new Cookie("sm_quasar_misc_auto_enable_sp",       "Auto enable spawn protection on spawn?",                                   CookieAccess_Public);
     gH_CK_customRespawnLength   = new Cookie("sm_quasar_misc_respawn_length",       "How long is this player's respawn time? 0 - Instant, -1 - Server Default", CookieAccess_Public);
-    gH_CK_usingCustomRespawn    = new Cookie("sm_quasar_misc_using_custom_respawn", "User set thier own respawn time.", CookieAccess_Public);
+    gH_CK_usingCustomRespawn    = new Cookie("sm_quasar_misc_using_custom_respawn", "User set thier own respawn time.",                                         CookieAccess_Public);
+    gH_CK_customPOV             = new Cookie("sm_quasar_misc_player_pov",           "User's current pov. 0 - First Person, 1 - Third Person",                   CookieAccess_Public);
+    gH_CK_customFOV             = new Cookie("sm_quasar_misc_player_fov",           "User's current FOV. Default is set to player's current FOV",               CookieAccess_Public);
+
+    // Load Translations
+    LoadTranslations("core.phrases");
+    LoadTranslations("common.phrases");
+    LoadTranslations("quasar_core.phrases");
+    LoadTranslations("quasar_misc.phrases");
 
     RegConsoleCmd("sm_qmisc", CMD_MiscellaneousMenu, "Use this to open the misc. functions menu!");
+    //RegAdminCmd("sm_breadplayer", CMD_BreadPlayer, ADMFLAG_GENERIC);
 
     HookEvent("player_spawn", Event_OnPlayerSpawn);
     HookEvent("player_hurt", Event_OnPlayerHurt);
@@ -217,6 +244,8 @@ public void OnPluginEnd()
     gH_CK_autoEnableTP.Close();
     gH_CK_customRespawnLength.Close();
     gH_CK_usingCustomRespawn.Close();
+    gH_CK_customFOV.Close();
+    gH_CK_customPOV.Close();
 
     gH_CVR_breadChance.Close();
     gH_CVR_totalAmountOfBread.Close();
@@ -258,45 +287,83 @@ public void OnConfigsExecuted()
     if (gH_CVR_useSpawnProtection.BoolValue)
     {
         gI_moduleFlags |= MISCMOD_SP;
-        RegConsoleCmd("sm_sp", CMD_SpawnProtection, "Use this to enable / disable spawn protection!");
-        RegConsoleCmd("sm_spawnprotection", CMD_SpawnProtection, "Use this to enable / disable spawn protection!");
+        if (!CommandExists("sm_sp"))
+            RegConsoleCmd("sm_sp",              CMD_SpawnProtection, "Use this to enable / disable spawn protection!");
+
+        if (!CommandExists("sm_spawnprotection"))
+            RegConsoleCmd("sm_spawnprotection", CMD_SpawnProtection, "Use this to enable / disable spawn protection!");
     }
 
     if (gH_CVR_useCustomRespawnTimes.BoolValue)
     {
         gI_moduleFlags |= MISCMOD_CRT;
-        RegConsoleCmd("sm_kc", CMD_RespawnTime);
-        RegConsoleCmd("sm_killcam", CMD_RespawnTime);
-        RegConsoleCmd("sm_spawntime", CMD_RespawnTime);
-        RegConsoleCmd("sm_respawntime", CMD_RespawnTime);
-        RegConsoleCmd("sm_rst", CMD_RespawnTime);
+        if (!CommandExists("sm_kc"))
+            RegConsoleCmd("sm_kc",          CMD_RespawnTime);
+
+        if (!CommandExists("sm_killcam"))
+            RegConsoleCmd("sm_killcam",     CMD_RespawnTime);
+
+        if (!CommandExists("sm_spawntime"))
+            RegConsoleCmd("sm_spawntime",   CMD_RespawnTime);
+
+        if (!CommandExists("sm_respawntime"))
+            RegConsoleCmd("sm_respawntime", CMD_RespawnTime);
+
+        if (!CommandExists("sm_rst"))
+            RegConsoleCmd("sm_rst",         CMD_RespawnTime);
     }
 
     if (gH_CVR_useThirdPerson.BoolValue)
     {
         gI_moduleFlags |= MISCMOD_TP;
-        RegConsoleCmd("sm_tp", CMD_ThirdPerson);
-        RegConsoleCmd("sm_fp", CMD_ThirdPerson);
-        RegConsoleCmd("sm_3", CMD_ThirdPerson);
-        RegConsoleCmd("sm_1", CMD_ThirdPerson);
-        RegConsoleCmd("sm_firstperson", CMD_ThirdPerson);
-        RegConsoleCmd("sm_thirdperson", CMD_ThirdPerson);
+        if (!CommandExists("sm_tp"))
+            RegConsoleCmd("sm_tp",          CMD_ChangePOV);
+
+        if (!CommandExists("sm_fp"))
+            RegConsoleCmd("sm_fp",          CMD_ChangePOV);
+
+        if (!CommandExists("sm_3"))
+            RegConsoleCmd("sm_3",           CMD_ChangePOV);
+
+        if (!CommandExists("sm_1"))
+            RegConsoleCmd("sm_1",           CMD_ChangePOV);
+
+        if (!CommandExists("sm_firstperson"))
+            RegConsoleCmd("sm_firstperson", CMD_ChangePOV);
+
+        if (!CommandExists("sm_thirdperson"))
+            RegConsoleCmd("sm_thirdperson", CMD_ChangePOV);
+
+        if (!CommandExists("sm_pov"))
+            RegConsoleCmd("sm_pov",         CMD_ChangePOV);
     }
 
     if (gH_CVR_useFriendly.BoolValue)
     {
         gI_moduleFlags |= MISCMOD_FRIENDLY;
-        RegConsoleCmd("sm_friendly", CMD_Friendly);
-        RegConsoleCmd("sm_friend", CMD_Friendly);
-        RegConsoleCmd("sm_fr", CMD_Friendly);
+        if (!CommandExists("sm_friendly"))
+            RegConsoleCmd("sm_friendly",    CMD_Friendly);
+
+        if (!CommandExists("sm_friend"))
+            RegConsoleCmd("sm_friend",      CMD_Friendly);
+
+        if (!CommandExists("sm_fr"))
+            RegConsoleCmd("sm_fr",          CMD_Friendly);
+    }
+
+    if (gH_CVR_useCustomFOV.BoolValue)
+    {
+        gI_moduleFlags |= MISCMOD_FOV;
+        if (!CommandExists("sm_fov"))
+            RegConsoleCmd("sm_fov", CMD_ChangeFOV);
     }
 
     if (gH_CVR_useAutoRestart.BoolValue && gB_SteamWorks)   { gI_moduleFlags |= MISCMOD_AR; }
-    
-    if (gH_CVR_teleportBread.BoolValue)                     
-    { 
-        gI_moduleFlags |= MISCMOD_BREAD; 
-        
+
+    if (gH_CVR_teleportBread.BoolValue)
+    {
+        gI_moduleFlags |= MISCMOD_BREAD;
+
         char s_breadPath[PLATFORM_MAX_PATH];
         for (int i = 1; i < 10; i++)
         {
@@ -304,10 +371,7 @@ public void OnConfigsExecuted()
             PrecacheModel(s_breadPath);
         }
 
-        if (gH_breadSpawnedArray != null)
-        {
-            gH_breadSpawnedArray = new ArrayList();
-        }
+        if (gH_breadSpawnedArray != null) { gH_breadSpawnedArray = new ArrayList(); }
         else
         {
             QSR_ClearBreadArray();
@@ -335,6 +399,7 @@ void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue
     else if (convar == gH_CVR_useFriendly            && (StringToInt(newValue) == 1 || StrEqual(newValue, "true", false)))                   { gI_moduleFlags |= MISCMOD_FRIENDLY; }
     else if (convar == gH_CVR_useSpawnProtection     && (StringToInt(newValue) == 1 || StrEqual(newValue, "true", false)))                   { gI_moduleFlags |= MISCMOD_SP; }
     else if (convar == gH_CVR_useThirdPerson         && (StringToInt(newValue) == 1 || StrEqual(newValue, "true", false)))                   { gI_moduleFlags |= MISCMOD_TP; }
+    else if (convar == gH_CVR_useCustomFOV           && (StringToInt(newValue) == 1 || StrEqual(newValue, "true", false)))                   { gI_moduleFlags |= MISCMOD_FOV; }
 
     // Misc Module disabled.
     else if (convar == gH_CVR_disableFallDamage      && (StringToInt(newValue) == 0 || StrEqual(newValue, "false", false)))  { gI_moduleFlags &= MISCMOD_NOFALL; }
@@ -345,12 +410,80 @@ void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue
     else if (convar == gH_CVR_useFriendly            && (StringToInt(newValue) == 0 || StrEqual(newValue, "false", false)))  { gI_moduleFlags &= MISCMOD_FRIENDLY; }
     else if (convar == gH_CVR_useSpawnProtection     && (StringToInt(newValue) == 0 || StrEqual(newValue, "false", false)))  { gI_moduleFlags &= MISCMOD_SP; }
     else if (convar == gH_CVR_useThirdPerson         && (StringToInt(newValue) == 0 || StrEqual(newValue, "false", false)))  { gI_moduleFlags &= MISCMOD_TP; }
+    else if (convar == gH_CVR_useCustomFOV           && (StringToInt(newValue) == 0 || StrEqual(newValue, "false", false)))  { gI_moduleFlags &= MISCMOD_FOV; }
 }
 
 public void OnMapStart()
 {
     if (GetExtensionFileStatus("SteamWorks.ext") < 1) { gB_SteamWorks = false; }
     else                                              { gB_SteamWorks = true;  }
+}
+
+public void OnClientPostAdminCheck(int client)
+{
+    if (QSR_IsValidClient(client))
+    {
+        PrintToServer("Client %d passed admin check", client);
+        gI_defaultFOV[client] = GetEntProp(client, Prop_Send, "m_iDefaultFOV");
+    }
+}
+
+public void OnClientConnected(int client)
+{
+    PrintToServer("Client %d connected", client);
+    gI_customFOV[client] = gI_defaultFOV[client];
+    gE_customPOVs[client] = POV_FirstPerson;
+    gE_defaultPOVs[client] = POV_FirstPerson;
+    gB_isFriendly[client] = false;
+    gF_respawnTimes[client] = 0.0;
+}
+
+public void OnClientDisconnect_Post(int client)
+{
+    gE_customPOVs[client] = POV_FirstPerson;
+    gE_defaultPOVs[client] = POV_FirstPerson;
+    gI_customFOV[client] = DEFAULT_FOV;
+    gI_defaultFOV[client] = DEFAULT_FOV;
+    gB_isFriendly[client] = false;
+    gF_respawnTimes[client] = 0.0;
+}
+
+public void OnClientCookiesCached(int client)
+{
+    // Todo: Organize this
+    PrintToServer("Cookies cached for client %d", client);
+    gI_customFOV[client]                    = gH_CK_customFOV.GetInt(client);
+    gE_defaultPOVs[client]                  = view_as<QSRPov>(gH_CK_customPOV.GetInt(client));
+    gB_isFriendly[client]                   = view_as<bool>(gH_CK_autoEnableFriendly.GetInt(client));
+    gF_respawnTimes[client]                 = gH_CK_customRespawnLength.GetFloat(client);
+    gST_playerSPInfo[client].b_enabled      = view_as<bool>(gH_CK_autoEnableSP.GetInt(client));
+}
+
+// Update player's custom POV and FOVs every frame to make sure
+// they aren't overwritten by the game.
+public void OnGameFrame()
+{
+    int userid;
+    for (int i=1; i < MaxClients; i++)
+    {
+        userid = QSR_IsValidClientEX(i);
+        if (userid)
+        {
+            if (QSR_UsingMiscModule(MiscModule_FOV))
+            {
+                QSR_InternalSetPlayerFOV(userid, gI_customFOV[i]);
+            }
+
+            if (QSR_UsingMiscModule(MiscModule_ThirdPerson))
+            {
+                if (!QSR_GetPlayerPOV(userid) != gE_customPOVs[i] &&
+                    !TF2_IsPlayerInCondition(i, TFCond_Taunting))
+                {
+                    QSR_InternalSetPlayerPOV(userid, gE_customPOVs[i]);
+                }
+            }
+        }
+    }
 }
 
 void Event_OnPlayerSpawn(Event event, const char[] name, bool dontBroadcast)
@@ -363,7 +496,7 @@ void Event_OnPlayerSpawn(Event event, const char[] name, bool dontBroadcast)
         if (QSR_PlayerEnabledSP(i_player))
         {
             QSR_GrantSpawnProtection(i_player);
-            gST_playerSPInfo[i_client].h_protectionTimer = CreateTimer(0.1, Timer_SpawnProtectionHandler, i_player, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+            gST_playerSPInfo[i_client].h_protectionTimer = CreateTimer(0.1, Timer_SpawnProtection, i_player, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
         }
     }
 }
@@ -442,7 +575,7 @@ public Action SteamWorks_RestartRequested()
 
 // General Functions
 
-// BREAD    
+// BREAD
 
 void QSR_ClearBreadArray()
 {
@@ -452,7 +585,7 @@ void QSR_ClearBreadArray()
         for (int i; i < gH_breadSpawnedArray.Length; i++)
         {
             bread = gH_breadSpawnedArray.Get(i);
-            
+
             if (bread != INVALID_HANDLE)
             {
                 bread.CleanUp();
@@ -472,9 +605,9 @@ void QSR_InternalGrantSpawnProtection(int userid)
 {
     int i_client = GetClientOfUserId(userid);
 
-    if (!QSR_IsValidClientEX(i_client)) 
-    { 
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_GrantSpawnProtection: Tried granting invalid client %d spawn protection!", i_client); 
+    if (!QSR_IsValidClientEX(i_client))
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_GrantSpawnProtection: Tried granting invalid client %d spawn protection!", i_client);
         return;
     }
 
@@ -489,7 +622,7 @@ void QSR_InternalGrantSpawnProtection(int userid)
     gH_CVR_spawnProtectionColor.GetString(s_convar, sizeof(s_convar));
     ExplodeString(s_convar, " ", s_rgba, 4, 8);
     FormatEx(s_rgb, sizeof(s_rgb), "%s %s %s", s_rgba[0], s_rgba[1], s_rgba[2]);
-    
+
     SetEntProp(i_client, Prop_Send, "m_nRenderMode", 1);
     DispatchKeyValue(i_client, "rendercolor", s_rgb);
     DispatchKeyValueInt(i_client, "renderamt", StringToInt(s_rgba[3]));
@@ -508,9 +641,9 @@ void QSR_InternalRemoveSpawnProtection(int userid)
 {
     int i_client = GetClientOfUserId(userid);
 
-    if (!QSR_IsValidClientEX(i_client)) 
-    { 
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_GrantSpawnProtection: Tried granting invalid client %d spawn protection!", i_client); 
+    if (!QSR_IsValidClientEX(i_client))
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_GrantSpawnProtection: Tried granting invalid client %d spawn protection!", i_client);
         return;
     }
 
@@ -520,7 +653,7 @@ void QSR_InternalRemoveSpawnProtection(int userid)
     Call_PushCell(userid);
     Call_Finish(a_removeSP);
     if (a_removeSP != Plugin_Continue) { return; }
-    
+
     SetEntProp(i_client, Prop_Send, "m_nRenderMode", 0);
     DispatchKeyValue(i_client, "rendercolor", "255 255 255");
     DispatchKeyValueInt(i_client, "renderamt", 255);
@@ -534,6 +667,83 @@ void QSR_InternalRemoveSpawnProtection(int userid)
     Call_PushCell(userid);
     Call_Finish();
 }
+
+void QSR_InternalSetPlayerPOV(int userid, QSRPov pov)
+{
+    int i_client = GetClientOfUserId(userid);
+    if (!QSR_IsValidClientEX(i_client))
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "Attempted to change POV of invalid client %d (userid %d)!", i_client, userid);
+        return;
+    }
+
+    if (TF2_IsPlayerInCondition(i_client, TFCond_Taunting) &&
+        QSR_GetPlayerPOV(userid) == POV_ThirdPerson)
+    { return; }
+    else if (TF2_IsPlayerInCondition(i_client, TFCond_Taunting) &&
+             QSR_GetPlayerPOV(userid) == POV_FirstPerson )
+    {
+        QSR_InternalSetPlayerPOV(userid, POV_ThirdPerson);
+        return;
+    }
+
+    // Set client to first person.
+    if (pov == POV_FirstPerson)
+    {
+        //QSR_LogMessage(gH_logFile, MODULE_NAME, "Set POV of client %d (userid %d) to First Person.", i_client, userid);
+        gE_customPOVs[i_client] = POV_FirstPerson;
+        SetVariantInt(0);
+        AcceptEntityInput(i_client, "SetForcedTauntCam", i_client);
+        return;
+    }
+
+    //QSR_LogMessage(gH_logFile, MODULE_NAME, "Set POV of client %d (userid %d) to Third Person.", i_client, userid);
+    // Set client to third person.
+    gE_customPOVs[i_client] = POV_ThirdPerson;
+    SetVariantInt(1);
+    AcceptEntityInput(i_client, "SetForcedTauntCam", i_client);
+}
+
+void QSR_InternalSetPlayerFOV(int userid, int fov)
+{
+    int i_client = GetClientOfUserId(userid);
+    if (!QSR_IsValidClientEX(i_client))
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "Attempted to change FOV of invalid client %d (userid %d)!", i_client, userid);
+        return;
+    }
+
+    // TODO: Cookies!
+
+    // Are we resetting the player's FOV?
+    if (fov == 0)
+    {
+        //QSR_LogMessage(gH_logFile, MODULE_NAME, "Reset client %d (userid %d)'s FOV to %d.", i_client, userid, gI_defaultFOV[i_client]);
+        gI_customFOV[i_client] = gI_defaultFOV[i_client];
+        SetEntProp(i_client, Prop_Send, "m_iFOV", gI_defaultFOV[i_client]);
+        SetEntProp(i_client, Prop_Send, "m_iDefaultFOV", gI_defaultFOV[i_client]);
+        return;
+    }
+
+    // We're setting a new custom FOV
+    //QSR_LogMessage(gH_logFile, MODULE_NAME, "Set client %d (userid %d)'s FOV to %d.", i_client, userid, fov);
+    gI_customFOV[i_client] = fov;
+    SetEntProp(i_client, Prop_Send, "m_iFOV", gI_customFOV[i_client]);
+    SetEntProp(i_client, Prop_Send, "m_iDefaultFOV", gI_customFOV[i_client]);
+}
+
+int QSR_InternalGetPlayerCurrentFOV(int userid)
+{
+    int i_client = GetClientOfUserId(userid);
+    if (!QSR_IsValidClientEX(i_client))
+    {
+        return -1;
+    }
+
+    return GetEntProp(i_client, Prop_Send, "m_iFOV");
+}
+
+
 
 // Natives
 
@@ -552,6 +762,7 @@ any Native_QSRUsingMiscModule(Handle plugin, int numParams)
         case MiscModule_SpawnProtection:    { return gI_moduleFlags & MISCMOD_SP; }
         case MiscModule_TeleportBread:      { return gI_moduleFlags & MISCMOD_BREAD; }
         case MiscModule_ThirdPerson:        { return gI_moduleFlags & MISCMOD_TP; }
+        case MiscModule_FOV:                { return gI_moduleFlags & MISCMOD_FOV; }
         default:                            { return false; }
     }
 }
@@ -567,10 +778,10 @@ any Native_QSRSpawnBreadAtPlayer(Handle plugin, int numParams)
 
     int i_userid = GetNativeCell(1),
         i_client = GetClientOfUserId(i_userid);
-    
-    if (!QSR_IsValidClient(i_client)) 
-    { 
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_SpawnBreadAtPlayer: Attempted to spawn bread for invalid client index %d", i_client); 
+
+    if (!QSR_IsValidClient(i_client))
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_SpawnBreadAtPlayer: Attempted to spawn bread for invalid client index %d", i_client);
         return false;
     }
 
@@ -623,7 +834,7 @@ any Native_QSRSpawnBreadAtPlayer(Handle plugin, int numParams)
         Call_StartForward(gH_FWD_onBreadSpawnedPre);
         Call_PushCellRef(bread);
         Call_Finish(a_spawnBread);
-        
+
         if (a_spawnBread != Plugin_Continue)
         {
             bread.CleanUp();
@@ -632,7 +843,7 @@ any Native_QSRSpawnBreadAtPlayer(Handle plugin, int numParams)
 
         if (DispatchSpawn(i_modelEnt))
         {
-            bread.EntTimer = CreateTimer(0.1, Timer_BreadLifetimeTimer, bread, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+            bread.EntTimer = CreateTimer(0.1, Timer_BreadLifetime, bread, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 
             gI_breadCount++;
             gH_breadSpawnedArray.Push(bread);
@@ -661,7 +872,7 @@ any Native_QSRPlayerEnabledSP(Handle plugin, int numParams)
         i_client = GetClientOfUserId(i_userid);
 
     if (!QSR_IsValidClient(i_client))
-    { 
+    {
         QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_PlayerEnabledSP: userid %d is not a valid target!", i_userid);
         return false;
     }
@@ -674,9 +885,9 @@ any Native_QSRIsPlayerProtected(Handle plugin, int numParams)
     int i_userid = GetNativeCell(1),
         i_client = GetClientOfUserId(i_userid);
 
-    if (!QSR_IsValidClientEX(i_client)) 
-    { 
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_IsPlayerProtected: userid %d is not a valid target!", i_userid); 
+    if (!QSR_IsValidClientEX(i_client))
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_IsPlayerProtected: userid %d is not a valid target!", i_userid);
         return false;
     }
 
@@ -689,8 +900,8 @@ void Native_QSRToggleSpawnProtection(Handle plugin, int numParams)
         i_client = GetClientOfUserId(i_userid);
 
     if (!QSR_IsValidClient(i_client))
-    { 
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_ToggleSpawnProtection: userid %d is not a valid target!", i_userid); 
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_ToggleSpawnProtection: userid %d is not a valid target!", i_userid);
         return;
     }
 
@@ -722,8 +933,8 @@ any Native_QSRPlayerHasCRespawnTime(Handle plugin, int numParams)
         i_client = GetClientOfUserId(i_userid);
 
     if (!QSR_IsValidClient(i_client))
-    { 
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_PlayerHasCRespawnTime: userid %d is not a valid target!", i_userid); 
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_PlayerHasCRespawnTime: userid %d is not a valid target!", i_userid);
         return false;
     }
 
@@ -760,6 +971,8 @@ void Native_QSRForcePlayerRespawn(Handle plugin, int numParams)
 }
 
 // Third Person
+
+// QSRPov QSR_GetPlayerPOV(int userid)
 any Native_QSRGetPlayerPOV(Handle plugin, int numParams)
 {
     int i_userid = GetNativeCell(1),
@@ -770,31 +983,34 @@ any Native_QSRGetPlayerPOV(Handle plugin, int numParams)
         return view_as<QSRPov>(-1);
     }
 
-    return gST_playerPOVs[i_client];
+    return gE_customPOVs[i_client];
 }
 
+// void QSR_SetPlayerPOV(int userid, QSRPov pov)
 void Native_QSRSetPlayerPOV(Handle plugin, int numParams)
 {
     int i_userid = GetNativeCell(1),
         i_client = GetClientOfUserId(i_userid);
+    QSRPov newPOV = GetNativeCell(2);
 
-    if (!QSR_IsValidClientEX(i_client))
+    if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to change invalid client %d's POV!", i_client);
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to set invalid client %d (userid %d)'s FOV!", i_client, i_userid);
         return;
     }
-
-    QSRPov newPOV = GetNativeCell(2);
 
     // void QSR_OnPlayerChangePOV(int userid, QSRPov oldPov, QSRPov newPov)
     Call_StartForward(gH_FWD_onChangePOV);
     Call_PushCell(i_userid);
-    Call_PushCell(gST_playerPOVs[i_client]);
-    gST_playerPOVs[i_client] = newPOV;
-    Call_PushCell(gST_playerPOVs[i_client]);
+    Call_PushCell(gE_customPOVs[i_client]);
+
+    QSR_InternalSetPlayerPOV(i_userid, newPOV);
+
+    Call_PushCell(gE_customPOVs[i_client]);
     Call_Finish();
 }
 
+// int QSR_GetPlayerFOV(int userid)
 int Native_QSRGetPlayerFOV(Handle plugin, int numParams)
 {
     int i_userid = GetNativeCell(1),
@@ -802,11 +1018,50 @@ int Native_QSRGetPlayerFOV(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to change invalid client %d's FOV!", i_client);
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to request invalid client %d (userid %d)'s FOV!", i_client, i_userid);
         return -1;
     }
 
+    return gI_customFOV[i_client];
+}
 
+// int QSR_GetPlayerDefaultFOV(int userid)
+int Native_QSRGetPlayerDefaultFOV(Handle plugin, int numParams)
+{
+    int i_userid = GetNativeCell(1),
+        i_client = GetClientOfUserId(i_userid);
+
+    if (!QSR_IsValidClient(i_client))
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to request invalid client %d's default FOV!", i_client);
+        return -1;
+    }
+
+    return gI_defaultFOV[i_client];
+}
+
+// void QSR_SetPlayerFOV(int userid, int fov)
+void Native_QSRSetPlayerFOV(Handle plugin, int numParams)
+{
+    int i_userid = GetNativeCell(1),
+        i_client = GetClientOfUserId(i_userid),
+        i_fov    = GetNativeCell(2);
+
+    if (!QSR_IsValidClient(i_client))
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to set invalid client %d's FOV!", i_client);
+        return;
+    }
+
+    // void QSR_OnPlayerChangeFOV(int userid, int oldFOV, int newPOV);
+    Call_StartForward(gH_FWD_onChangeFOV);
+    Call_PushCell(i_userid);
+    Call_PushCell(QSR_GetPlayerFOV(i_userid));
+
+    QSR_InternalSetPlayerFOV(i_userid, i_fov);
+
+    Call_PushCell(QSR_GetPlayerFOV(i_userid));
+    Call_Finish();
 }
 
 // Friendly
@@ -843,6 +1098,88 @@ void Native_QSRSetPlayerFriendlyState(Handle plugin, int numParams)
     Call_Finish();
 }
 
+// General Functions
+void ShowMiscMenu(int client)
+{
+    Menu miscMenu = new Menu(Handler_MiscMenuMain,  MenuAction_Select |
+                                                    MenuAction_Cancel |
+                                                    MenuAction_End |
+                                                    MenuAction_DrawItem);
+    miscMenu.SetTitle("%t", "QSR_MiscMainMenuTitle");
+
+    // Let's set up a display for the user
+    /**
+     * Miscellaneous Settings
+     *
+     * Friendly:            On
+     * Spawn Protection:    On
+     * Respawn Time:        Instant
+     * POV:                 First
+     * FOV:                 75
+     *
+     * 1. Toggle Friendly
+     * 2. Toggle Spawn Protection
+     * 3. Change Respawn Time
+     * 4. Change POV
+     * 5. Change FOV
+     */
+
+    char display[256];
+
+    (gB_isFriendly[client]) ?
+        FormatEx(display, sizeof(display),
+            "\n%T On\n", "QSR_MiscMenuFriendlyDisplay", client):
+        FormatEx(display, sizeof(display),
+            "\n%T Off\n", "QSR_MiscMenuFriendlyDisplay", client);
+
+    (gST_playerSPInfo[client].b_enabled) ?
+        FormatEx(display, sizeof(display),
+            "%s%T On\n", display, "QSR_MiscMenuSPDisplay", client):
+        FormatEx(display, sizeof(display),
+            "%s%T Off\n", display, "QSR_MiscMenuSPDisplay", client);
+
+    if (gF_respawnTimes[client] <= 0.0)
+        FormatEx(display, sizeof(display),
+            "%s%T %T\n", display, "QSR_MiscMenuRTDisplay", client, "QSR_RespawnTimeInstant", client);
+    else
+        FormatEx(display, sizeof(display),
+            "%s%T %.2f\n", display, "QSR_MiscMenuRTDisplay", gF_respawnTimes[client]);
+
+    (gE_customPOVs[client] == POV_FirstPerson) ?
+        FormatEx(display, sizeof(display),
+            "%s%T %T\n", display, "QSR_MiscMenuPOVDisplay", client, "QSR_POVFirstPerson", client):
+        FormatEx(display, sizeof(display),
+            "%s%T %T\n", display, "QSR_MiscMenuPOVDisplay", client, "QSR_POVThirdPerson", client);
+
+    FormatEx(display, sizeof(display),
+        "%s%T %d\n", display, "QSR_MiscMenuFOVDisplay", client, gI_customFOV[client]);
+
+    miscMenu.AddItem("X", display, ITEMDRAW_DISABLED);
+
+    FormatEx(display, sizeof(display),
+        "%T", "QSR_MiscMenuFriendlyOption", client);
+    miscMenu.AddItem("1", display);
+
+    FormatEx(display, sizeof(display),
+        "%T", "QSR_MiscMenuSPOption", client);
+    miscMenu.AddItem("2", display);
+
+    FormatEx(display, sizeof(display),
+        "%T", "QSR_MiscMenuRTOption", client);
+    miscMenu.AddItem("3", display);
+
+    FormatEx(display, sizeof(display),
+        "%T", "QSR_MiscMenuPOVOption", client);
+    miscMenu.AddItem("4", display);
+
+    FormatEx(display, sizeof(display),
+        "%T", "QSR_MiscMenuFOVOption", client);
+    miscMenu.AddItem("5", display);
+
+    miscMenu.Display(client, 20);
+}
+
+
 // CALLBACKS
 
 // GENERAL
@@ -851,18 +1188,84 @@ void Timer_RestartServer(Handle timer)
     ServerCommand("restart");
 }
 
+int Handler_MiscMenuMain(Menu menu, MenuAction action, int param1, int param2)
+{
+    switch(action)
+    {
+        case MenuAction_Select:
+        {
+            char info[4];
+            GetMenuItem(menu, param2, info, sizeof(info));
+            switch (info[0])
+            {
+                // Toggle Friendly
+                case '1':
+                {
+                    ShowMiscMenu(param1);
+                }
+
+                // Toggle Spawn Protection
+                case '2':
+                {
+                    ShowMiscMenu(param1);
+                }
+
+                // Change Respawn Time
+                case '3':
+                {
+                    //ShowRTMenu(param1);
+                }
+
+                // Change POV
+                case '4':
+                {
+                    ShowMiscMenu(param1);
+                }
+
+                // Reset FOV
+                case '5':
+                {
+                    ShowMiscMenu(param1);
+                }
+            }
+        }
+
+        case MenuAction_DrawItem:
+        {
+            char info[4];
+            GetMenuItem(menu, param2, info, sizeof(info));
+
+            // If we're displaying info to the player we don't
+            // want to have the item slot number be displayed.
+            if (info[0] == 'X')
+                return (ITEMDRAW_DEFAULT | ITEMDRAW_RAWLINE);
+
+            return ITEMDRAW_DEFAULT;
+        }
+
+        case MenuAction_Cancel: {}
+
+        case MenuAction_End:
+        {
+            delete menu;
+        }
+    }
+
+    return 0;
+}
+
 // Bread
 
-Action Timer_BreadLifetimeTimer(Handle timer, QSRBreadEntity bread)
+Action Timer_BreadLifetime(Handle timer, QSRBreadEntity bread)
 {
     if (!bread.Validate())
     {
         PrintToServer("Unable to validate bread entity!");
 
         int i_arrayIdx = gH_breadSpawnedArray.FindValue(bread);
-        if (i_arrayIdx != -1) 
-        { 
-            gH_breadSpawnedArray.Erase(i_arrayIdx); 
+        if (i_arrayIdx != -1)
+        {
+            gH_breadSpawnedArray.Erase(i_arrayIdx);
         }
 
         gI_breadCount--;
@@ -875,7 +1278,7 @@ Action Timer_BreadLifetimeTimer(Handle timer, QSRBreadEntity bread)
         int i_arrayIdx = gH_breadSpawnedArray.FindValue(bread);
         if (i_arrayIdx != -1)
         {
-            gH_breadSpawnedArray.Erase(i_arrayIdx); 
+            gH_breadSpawnedArray.Erase(i_arrayIdx);
         }
 
         gI_breadCount--;
@@ -889,12 +1292,12 @@ Action Timer_BreadLifetimeTimer(Handle timer, QSRBreadEntity bread)
 
 // SPAWN PROTECTION
 
-Action Timer_SpawnProtectionHandler(Handle timer, int userid)
+Action Timer_SpawnProtection(Handle timer, int userid)
 {
     int i_client = GetClientOfUserId(userid);
 
     if (!QSR_IsValidClientEX(i_client)) { return Plugin_Stop; }
-    
+
     if (gST_playerSPInfo[i_client].f_timeLeft <= 0.0)
     {
         QSR_RemoveSpawnProtection(i_client);
@@ -903,7 +1306,7 @@ Action Timer_SpawnProtectionHandler(Handle timer, int userid)
     }
     else if (gST_playerSPInfo[i_client].f_timeLeft <= (gH_CVR_spawnProtectionLength.FloatValue * 0.15))
     {
-        if (RoundToFloor(gST_playerSPInfo[i_client].f_timeLeft) % 2 == 0)
+        if (!(RoundToFloor(gST_playerSPInfo[i_client].f_timeLeft) % 2))
         {
             DispatchKeyValueInt(i_client, "renderamt", 255);
         }
@@ -925,25 +1328,108 @@ Action CMD_SpawnProtection(int client, int args)
 
 // Respawn Times
 
-Action Timer_RespawnHandler(Handle timer, int userid)
+Action Timer_Respawn(Handle timer, int userid)
 {
-    
-    
+
+
     return Plugin_Handled;
 }
 
 Action CMD_RespawnTime(int client, int args)
 {
-    
+
 
     return Plugin_Handled;
 }
 
 // Third Person
 
-Action CMD_ThirdPerson(int client, int args)
+Action CMD_ChangePOV(int client, int args)
 {
-    
+    if (client == 0)
+    {
+        return Plugin_Handled;
+    }
+
+    int i_userid = QSR_IsValidClientEX(client);
+
+    if (i_userid)
+    {
+        if (gE_customPOVs[client] == POV_FirstPerson)
+        {
+            gH_CK_customPOV.SetInt(client, view_as<int>(POV_ThirdPerson));
+            QSR_SetPlayerPOV(i_userid, POV_ThirdPerson);
+            QSR_PrintToChat(i_userid, "%t",
+                "QSR_ChangedPOV", gST_chatFormatting.s_actionColor,
+                gST_chatFormatting.s_commandColor, "QSR_POVThirdPerson");
+        }
+        else
+        {
+            gH_CK_customPOV.SetInt(client, view_as<int>(POV_FirstPerson));
+            QSR_SetPlayerPOV(i_userid, POV_FirstPerson);
+            QSR_PrintToChat(i_userid, "%t",
+                "QSR_ChangedPOV", gST_chatFormatting.s_actionColor,
+                gST_chatFormatting.s_commandColor, "QSR_POVFirstPerson");
+        }
+    }
+    else
+    {
+        QSR_PrintToChat(i_userid, "%t",
+            "QSR_ChangePOVDeadOrSpectator", gST_chatFormatting.s_errorColor);
+    }
+
+    return Plugin_Handled;
+}
+
+// FOV
+Action CMD_ChangeFOV(int client, int args)
+{
+    if (client == 0)
+    {
+        return Plugin_Handled;
+    }
+
+    int i_userid = GetClientUserId(client);
+
+    if (i_userid)
+    {
+        int i_desiredFOV = GetCmdArgInt(1);
+        if (!i_desiredFOV || !args)
+        {
+            i_desiredFOV = gI_defaultFOV[client];
+        }
+        else if (i_desiredFOV > gH_CVR_customFOVMaximum.IntValue)
+        {
+            QSR_PrintToChat(i_userid, "%t",
+                "QSR_InvalidFOV", gST_chatFormatting.s_errorColor,
+                gST_chatFormatting.s_commandColor, i_desiredFOV,
+                gST_chatFormatting.s_errorColor, gST_chatFormatting.s_commandColor,
+                gH_CVR_customFOVMaximum.IntValue, gST_chatFormatting.s_errorColor);
+
+            return Plugin_Handled;
+        }
+        else if (i_desiredFOV < gH_CVR_customFOVMinimum.IntValue && i_desiredFOV != 0)
+        {
+            QSR_PrintToChat(i_userid, "%t",
+                "QSR_InvalidFOV", gST_chatFormatting.s_errorColor,
+                gST_chatFormatting.s_commandColor, i_desiredFOV,
+                gST_chatFormatting.s_errorColor, gST_chatFormatting.s_commandColor,
+                gH_CVR_customFOVMinimum.IntValue, gST_chatFormatting.s_errorColor);
+
+            return Plugin_Handled;
+        }
+
+        gH_CK_customFOV.SetInt(client, i_desiredFOV);
+        QSR_SetPlayerFOV(i_userid, i_desiredFOV);
+        QSR_PrintToChat(i_userid, "%t",
+        "QSR_ChangedFOV", gST_chatFormatting.s_actionColor,
+        gST_chatFormatting.s_commandColor, i_desiredFOV);
+    }
+    else
+    {
+        QSR_PrintToChat(i_userid, "%t",
+            "QSR_ChangeFOVDeadOrSpectator", gST_chatFormatting.s_errorColor);
+    }
 
     return Plugin_Handled;
 }
@@ -952,7 +1438,7 @@ Action CMD_ThirdPerson(int client, int args)
 
 Action CMD_Friendly(int client, int args)
 {
-    
+
 
     return Plugin_Handled;
 }
@@ -961,7 +1447,7 @@ Action CMD_Friendly(int client, int args)
 
 Action CMD_MiscellaneousMenu(int client, int args)
 {
-
+    ShowMiscMenu(client);
 
     return Plugin_Handled;
 }

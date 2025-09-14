@@ -103,32 +103,32 @@ enum struct QSRGeneralSounds
 
 /**
  *  Returns a struct with all the filepaths to sounds the system will use.
- * 
+ *
  *  @return     A QSRGeneralSounds obj with the filepath to each system sound
  */
 native void QSR_GetSystemSounds(QSRGeneralSounds sound);
 
 /**
  *  Returns a struct with all the chat formatting the system uses.
- * 
+ *
  *  @return     A QSRChatFormat obj with chat colors and the system prefix.
  */
 native void QSR_GetSystemFormatting();
 
 /**
  *  Automatically appends the quasar prefix to a message to send to a valid client
- * 
+ *
  *  @param userid       The client userid to send the message to.
  *  @param message      The message to log.
  *  @param ...          Paramaters for formatting.
- * 
+ *
  *  @return             true if we printed to client, false otherwise.
  */
 native bool QSR_PrintToChat(int userid, const char[] message, any ...);
 
 /**
  *  Automatically appends the quasar prefix to a message to send to all valid clients
- * 
+ *
  *  @param mesage       The message to send
  *  @param ...          Paramaters for formatting.
  */
@@ -136,7 +136,7 @@ native void QSR_PrintToChatAll(const char[] message, any ...);
 
 /**
  *  A wrapper for QSR_PrintCenterText that includes functionality from SetHudTextParams()
- *  
+ *
  *  @param userid           The userid of the player we're sending the message to.
  *  @param pos              [0] = x, [1] = y, the coordinates to display the text on screen at. See SetHudTextParams() for more details.
  *  @param holdTime         The amount of time to keep the text on screen.
@@ -149,7 +149,7 @@ native bool QSR_PrintCenterTextEx(int userid, float pos[2], float holdTime, int 
 
 /**
  *  A wrapper for QSR_PrintCenterTextAll that includes functionality from SetHudTextParams()
- *  
+ *
  *  @param pos              [0] = x, [1] = y, the coordinates to display the text on screen at. See SetHudTextParams() for more details.
  *  @param holdTime         The amount of time to keep the text on screen.
  *  @param color1           The color + alpha of the text we'll send to the client.
@@ -162,12 +162,12 @@ native void QSR_PrintCenterTextAllEx(float pos[2], float holdTime, int color1[4]
 
 /**
  *  Does the same thing as QSR_PrintToChat, but plays a sound along with the message.
- * 
+ *
  *  @param userid       The client userid to send the message to.
  *  @param sound        The sound to play to the user.
  *  @param message      The message to send to the user.
  *  @param ...          Paramaters for formatting.
- * 
+ *
  *  @return             True if we notified the client, false if not.
  */
 native bool QSR_NotifyUser(int userid, const char[] sound, const char[] message, any ...);
@@ -178,7 +178,7 @@ native bool QSR_NotifyUser(int userid, const char[] sound, const char[] message,
 
 /**
  *  Fires once the core plugin has connected to the Quasar database.
- *  
+ *
  *  @param db       A reference to the Database handle in the core plugin.
  */
 forward void QSR_OnDatabaseConnected(Database& db);
@@ -186,7 +186,7 @@ forward void QSR_OnDatabaseConnected(Database& db);
 
 /**
  *  Fires once the core plugin has made the log file.
- *  
+ *
  *  @param file     A reference to the File handle in the core plugin.
  */
 forward void QSR_OnLogFileMade(File& file);
@@ -194,7 +194,7 @@ forward void QSR_OnLogFileMade(File& file);
 /**
  *  Fires once we get the chat formatting strings from the autoexeconfig.
  *  Each key in the stringmap corresponds to a convar.
- * 
+ *
  *  @param formatting   A clone of the StringMap with all of the formatting strings.
  */
 forward void QSR_OnSystemFormattingRetrieved(StringMap formatting);
@@ -202,7 +202,7 @@ forward void QSR_OnSystemFormattingRetrieved(StringMap formatting);
 /**
  *  Fires once we get the soundfiles from the autoexeconfig.
  *  Each key in the stringmap corresponds to a convar.
- * 
+ *
  *  @param formatting   A clone of the StringMap with all of the soundfiles.
  */
 forward void QSR_OnSystemSoundsRetrieved(StringMap sounds);
@@ -213,7 +213,7 @@ forward void QSR_OnSystemSoundsRetrieved(StringMap sounds);
 
 /**
  *  Checks to see if a client index is valid.
- * 
+ *
  *  @param client       client index to check
  *  @return             userid of client if true, 0 if false.
  */
@@ -226,13 +226,13 @@ stock int QSR_IsValidClient(int client)
 
 /**
  *  Checks to see if a client index is valid and alive.
- * 
+ *
  *  @param client       client index to check
  *  @return             userid of client if true, 0 if false.
  */
 stock int QSR_IsValidClientEX(int client)
 {
-    if (client && IsClientInGame(client) && !IsFakeClient(client) && IsPlayerAlive(client)) { return GetClientUserId(client); }
+    if (client && IsClientInGame(client) && !IsFakeClient(client) && QSR_IsPlayerAlive(GetClientUserId(client))) { return GetClientUserId(client); }
 
     return 0;
 }
@@ -240,7 +240,7 @@ stock int QSR_IsValidClientEX(int client)
 
 /**
  *  Sends a query to the database and logs it in the logfile.
- * 
+ *
  *  @param log      Log file to save to.
  *  @param db       Database to send query to.
  *  @param query    The query to send.
@@ -259,7 +259,7 @@ stock void QSR_LogQuery(File log, Database db, const char[] query, SQLQueryCallb
 
 /**
  *  Logs a message to the server console, and to the log file.
- * 
+ *
  *  @param log      Log file to save to.
  *  @param message  The message to save.
  *  @param ...      data for formatting
@@ -294,13 +294,13 @@ stock void QSR_ThrowError(File log, const char[] module, const char[] message, a
 
 /**
  *  Checks if a string is a steam authid, and returns the authid type if it is.
- * 
+ *
  *  @param string   The string to check
  *  @return         The authid type the string is, or -1 if it's not.
  */
 stock AuthIdType QSR_IsStringAuthId(const char[] string)
 {
-    Regex h_authPattern = new Regex("STEAM_[0-9]:[0-9]:[0-9]{8}"); 
+    Regex h_authPattern = new Regex("STEAM_[0-9]:[0-9]:[0-9]{8}");
     if (h_authPattern.Match(string) != -1)
     {
         h_authPattern.Close();

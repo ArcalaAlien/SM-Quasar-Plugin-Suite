@@ -1,3 +1,8 @@
+#if defined _quasar_calendar_included
+	#endinput
+#endif
+#define _quasar_calendar_included
+
 public SharedPlugin __pl_quasarcalendar =
 {
     name="quasar_calendar",

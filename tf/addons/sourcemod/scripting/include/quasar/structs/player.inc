@@ -70,15 +70,15 @@ enum struct QSRPlayer
 
     void CreateTimers(bool usingAFK = true)
     {
-        if (this.playtimeTimer != null) 
-        { 
+        if (this.playtimeTimer != null)
+        {
             KillTimer(this.playtimeTimer);
             this.playtimeTimer = null;
         }
-        
+
         if (this.afkTimer != null)
         {
-            KillTimer(this.afkTimer);         
+            KillTimer(this.afkTimer);
             this.afkTimer = null;
         }
 

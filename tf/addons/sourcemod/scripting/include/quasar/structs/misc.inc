@@ -1,12 +1,13 @@
-#define MISCMOD_NONE            0
-#define MISCMOD_NOFALL          (1 << 0)
-#define MISCMOD_NOFALLNOISE     (1 << 1)
-#define MISCMOD_SP              (1 << 2)
-#define MISCMOD_AR              (1 << 3)
-#define MISCMOD_CRT             (1 << 4)
-#define MISCMOD_TP              (1 << 5)
-#define MISCMOD_FRIENDLY        (1 << 6)
-#define MISCMOD_BREAD           (1 << 7)
+#define MISCMOD_NONE            0           // No Modules Enabled
+#define MISCMOD_NOFALL          (1 << 0)    // No Fall Damage
+#define MISCMOD_NOFALLNOISE     (1 << 1)    // No Fall Damage Noise
+#define MISCMOD_SP              (1 << 2)    // Spawn Protection
+#define MISCMOD_AR              (1 << 3)    // Auto Restart
+#define MISCMOD_CRT             (1 << 4)    // Custom Respawn Times
+#define MISCMOD_TP              (1 << 5)    // Third Person
+#define MISCMOD_FRIENDLY        (1 << 6)    // Friendly
+#define MISCMOD_BREAD           (1 << 7)    // Teleport Bread
+#define MISCMOD_FOV             (1 << 8)    // Field of View
 
 #define BREADMDL_BAGUETTE       "models/weapons/c_models/c_bread/c_bread_baguette.mdl"
 #define BREADMDL_BURNT          "models/weapons/c_models/c_bread/c_bread_burnt.mdl"
@@ -18,6 +19,8 @@
 #define BREADMDL_RATION         "models/weapons/c_models/c_bread/c_bread_ration.mdl"
 #define BREADMDL_RUSSIANBLACK   "models/weapons/c_models/c_bread/c_bread_russianblack.mdl"
 
+#define DEFAULT_FOV 75
+
 enum QSRMiscModuleType
 {
     MiscModule_None = 0,
@@ -28,7 +31,8 @@ enum QSRMiscModuleType
     MiscModule_CustomRespawnTimes,
     MiscModule_ThirdPerson,
     MiscModule_Friendly,
-    MiscModule_TeleportBread
+    MiscModule_TeleportBread,
+    MiscModule_FOV
 }
 
 enum QSRBreadModel

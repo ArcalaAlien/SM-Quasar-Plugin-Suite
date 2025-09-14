@@ -1,5 +1,7 @@
 #include <sourcemod>
 #include <sdktools>
+#include <tf2>
+#include <tf2_stocks>
 
 #include <quasar/core>
 #include <quasar/players>
@@ -59,6 +61,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("QSR_FindPlayerByAuthId",  Native_QSRFindPlayerByAuthId);
     CreateNative("QSR_CheckForUpgrade",     Native_QSRCheckForUpgrade);
     CreateNative("QSR_AddUpgrade",          Native_QSRAddUpgrade);
+    CreateNative("QSR_IsPlayerAlive",       Native_QSRIsPlayerAlive);
 
     gB_late = late;
 }
@@ -91,9 +94,9 @@ public void OnConfigsExecuted()
     gH_CVR_subdomain = FindConVar("sm_quasar_subdomain");
     gH_CVR_creditName = FindConVar("sm_quasar_bank_credit_name");
     gH_CVR_walletName = FindConVar("sm_quasar_bank_wallet_name");
-    if (gH_CVR_subdomain != null) 
-    { 
-        gH_CVR_subdomain.GetString(gS_subdomain, sizeof(gS_subdomain)); 
+    if (gH_CVR_subdomain != null)
+    {
+        gH_CVR_subdomain.GetString(gS_subdomain, sizeof(gS_subdomain));
     }
 }
 
@@ -104,7 +107,7 @@ public void OnClientPostAdminCheck(int client)
         gST_players[client].Reset();
 
         char s_steam2ID[64], s_steam3ID[64], s_steam64ID[64], s_name[128];
-        if (GetClientAuthId(client, AuthId_Steam2, s_steam2ID, sizeof(s_steam2ID)) && 
+        if (GetClientAuthId(client, AuthId_Steam2, s_steam2ID, sizeof(s_steam2ID)) &&
             GetClientAuthId(client, AuthId_Steam3, s_steam3ID, sizeof(s_steam3ID)) &&
             GetClientAuthId(client, AuthId_SteamID64, s_steam64ID, sizeof(s_steam64ID)))
         {
@@ -192,7 +195,7 @@ public void QSR_OnSystemSoundsRetrieved(StringMap sounds)
 // Natives
 void Native_QSRModPlayerPoints(Handle plugin, int numParams)
 {
-    int     i_userid = GetNativeCell(1), 
+    int     i_userid = GetNativeCell(1),
             i_client = GetClientOfUserId(i_userid);
     float   f_amount = GetNativeCell(2);
     bool    b_notify = GetNativeCell(3);
@@ -234,11 +237,11 @@ void Native_QSRModPlayerPoints(Handle plugin, int numParams)
 
 void Native_QSRModPlayerCredits(Handle plugin, int numParams)
 {
-    int  i_userid = GetNativeCell(1), 
+    int  i_userid = GetNativeCell(1),
          i_client = GetClientOfUserId(i_userid),
          i_amount = GetNativeCell(2);
     bool b_notify = GetNativeCell(3);
-    
+
     if (QSR_IsValidClient(i_client) && QSR_IsPlayerFetched(i_userid))
     {
         Call_StartForward(gH_FWD_creditsChanged);
@@ -346,7 +349,7 @@ int Native_QSRFindPlayerByName(Handle plugin, int numParams)
     int userid = -1;
     for (int i = 1; i < MaxClients; i++)
     {
-        
+
         if (!QSR_IsValidClient(i) || !QSR_IsPlayerFetched(GetClientUserId(i))) { continue; }
         userid = GetClientUserId(i);
 
@@ -367,7 +370,7 @@ int Native_QSRFindPlayerByAuthId(Handle plugin, int numParams)
     AuthIdType authType = view_as<AuthIdType>(GetNativeCell(1));
 
     if (authType == AuthId_Engine) { return -1; }
-    
+
     int len;
     GetNativeStringLength(2, len);
     char[] authId = new char[len+1];
@@ -429,6 +432,16 @@ void Native_QSRAddUpgrade(Handle plugin, int numParams)
     gST_players[client].upgradeFlags |= QSR_UpgradeTypeToFlag(upgrade);
 }
 
+any Native_QSRIsPlayerAlive(Handle plugin, int numParams)
+{
+    int i_userid = GetNativeCell(1),
+        i_client = GetClientOfUserId(i_userid);
+
+    return  (IsPlayerAlive(i_client) &&
+            (TF2_GetClientTeam(i_client) == TFTeam_Blue ||
+             TF2_GetClientTeam(i_client) == TFTeam_Red));
+}
+
 // General Functions
 void QSR_DB_SendClientLoginInfo(const char[] subdomain, int client, const char[] steam2_id, const char[] steam3_id, const char[] steam64_id, const char[] name)
 {
@@ -440,8 +453,8 @@ void QSR_DB_SendClientLoginInfo(const char[] subdomain, int client, const char[]
     FormatEx(s_query, sizeof(s_query), "INSERT INTO `srv_%s_players` (steam2_id, steam3_id, steam64_id, name, last_login) \
                                         VALUES ('%s', '%s', '%s', '%s', '%d') \
                                         ON DUPLICATE KEY UPDATE \
-                                        `steam2_id`='%s', `steam3_id`='%s', `steam64_id`='%s', `name`='%s', `last_login`='%d'", 
-                                        subdomain, steam2_id, steam3_id, steam64_id, s_nameEscaped, GetTime(), 
+                                        `steam2_id`='%s', `steam3_id`='%s', `steam64_id`='%s', `name`='%s', `last_login`='%d'",
+                                        subdomain, steam2_id, steam3_id, steam64_id, s_nameEscaped, GetTime(),
                                         steam2_id, steam3_id, steam64_id, s_nameEscaped, GetTime());
     QSR_LogQuery(gH_logFile, gH_db, s_query, SQLCB_SentLoginInfo, client);
 }
@@ -468,7 +481,7 @@ void Event_OnNameChange(Event event, const char[] name, bool dontBroadcast)
 Action Timer_PollAuth(Handle timer, int client)
 {
     char s_steam2ID[64], s_steam3ID[64], s_steam64ID[64], s_name[128];
-    if (GetClientAuthId(client, AuthId_Steam2, s_steam2ID, sizeof(s_steam2ID)) && 
+    if (GetClientAuthId(client, AuthId_Steam2, s_steam2ID, sizeof(s_steam2ID)) &&
         GetClientAuthId(client, AuthId_Steam3, s_steam3ID, sizeof(s_steam3ID)) &&
         GetClientAuthId(client, AuthId_SteamID64, s_steam64ID, sizeof(s_steam64ID)))
     {
@@ -507,8 +520,8 @@ void Timer_RetrySendLogin(Handle timer, int client)
         if (gST_players[client].loginAttempts == 5)
         {
             QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to send login info for Client: %d Steam64ID: %s after 5 attempts!", client, gST_players[client].steam64ID);
-            QSR_NotifyUser(GetClientUserId(client), gST_sounds.s_errorSound, 
-            "%t", "QSR_UnableToLogIn", client, 
+            QSR_NotifyUser(GetClientUserId(client), gST_sounds.s_errorSound,
+            "%t", "QSR_UnableToLogIn", client,
             gST_chatFormatStrings.s_errorColor, gST_chatFormatStrings.s_commandColor, gST_chatFormatStrings.s_errorColor);
             gST_players[client].loginAttempts = 0;
             gST_players[client].isLoggedIn = false;
@@ -527,7 +540,7 @@ void Timer_PopulatePlayerInfo(Handle timer, int client)
         if (gST_players[client].fetchInfoAttempts == 5)
         {
             QSR_LogMessage(gH_logFile, MODULE_NAME, "ERROR: Unable to get player info for SteamID %s after 5 attempts!", gST_players[client].steam64ID);
-            QSR_NotifyUser(GetClientUserId(client), gST_sounds.s_errorSound, 
+            QSR_NotifyUser(GetClientUserId(client), gST_sounds.s_errorSound,
             "%T", "QSR_UnableToFetchInfo", client,
             gST_chatFormatStrings.s_errorColor, gST_chatFormatStrings.s_commandColor, gST_chatFormatStrings.s_errorColor);
             gST_players[client].fetchInfoAttempts = 0;
@@ -536,7 +549,7 @@ void Timer_PopulatePlayerInfo(Handle timer, int client)
         }
 
         char s_query[512];
-        FormatEx(s_query, sizeof(s_query), 
+        FormatEx(s_query, sizeof(s_query),
         "SELECT name, steam2_id, steam3_id, steam64_id, \
         points, credits, first_login, playtime, time_afk \
         FROM `[%s Player Info]` \
@@ -578,16 +591,16 @@ void SQLCB_PopulatePlayerInfo(Database db, DBResultSet results, const char[] err
         CreateTimer(5.0, Timer_PopulatePlayerInfo, client);
         QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to fetch player info! Attempting again in 5s.\nERROR: %s", error);
         return;
-    } 
+    }
 
     if (results.HasResults)
     {
         if(results.FetchRow())
         {
             // Let's grab the info from the result set
-            char    name[MAX_NAME_LENGTH], 
-                    steam2ID[MAX_AUTHID_LENGTH], 
-                    steam3ID[MAX_AUTHID_LENGTH], 
+            char    name[MAX_NAME_LENGTH],
+                    steam2ID[MAX_AUTHID_LENGTH],
+                    steam3ID[MAX_AUTHID_LENGTH],
                     steam64ID[MAX_AUTHID_LENGTH];
             float   points;
             int     credits,
@@ -610,8 +623,8 @@ void SQLCB_PopulatePlayerInfo(Database db, DBResultSet results, const char[] err
             totalTimeAFK = results.FetchInt(8);
 
             if (firstLogin == -1)
-            { 
-                firstLogin = GetTime(); 
+            {
+                firstLogin = GetTime();
                 char query[512];
                 FormatEx(query, sizeof(query), "\
                 UPDATE `srv_%s_players`\

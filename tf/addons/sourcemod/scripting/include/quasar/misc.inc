@@ -1,3 +1,8 @@
+#if defined _quasar_misc_included
+	#endinput
+#endif
+#define _quasar_misc_included
+
 #include <quasar/structs/misc>
 
 public SharedPlugin __pl_quasarmisc =
@@ -29,6 +34,9 @@ public __pl_quasarmisc_SetNTVOptional()
     MarkNativeAsOptional("QSR_SetPlayerPOV");
     MarkNativeAsOptional("QSR_IsPlayerFriendly");
     MarkNativeAsOptional("QSR_SetPlayerFriendlyState");
+    MarkNativeAsOptional("QSR_GetPlayerFOV");
+    MarkNativeAsOptional("QSR_GetPlayerDefaultFOV");
+    MarkNativeAsOptional("QSR_SetPlayerFOV");
 }
 
 //** NATIVES */
@@ -38,7 +46,7 @@ public __pl_quasarmisc_SetNTVOptional()
 ////////////////////////
 
 /**
- * 
+ *
  */
 native bool QSR_UsingMiscModule(QSRMiscModuleType module);
 
@@ -47,7 +55,7 @@ native bool QSR_UsingMiscModule(QSRMiscModuleType module);
 ////////////////////////
 
 /**
- * 
+ *
  */
 native bool QSR_SpawnBreadAtPlayer(int userid, QSRBreadModel model=BreadModel_Random);
 
@@ -56,27 +64,27 @@ native bool QSR_SpawnBreadAtPlayer(int userid, QSRBreadModel model=BreadModel_Ra
 ////////////////////////
 
 /**
- * 
+ *
  */
 native bool QSR_PlayerEnabledSP(int userid);
 
 /**
- * 
+ *
  */
 native bool QSR_IsPlayerProtected(int userid);
 
 /**
- * 
+ *
  */
 native void QSR_ToggleSpawnProtection(int userid, int enabled=-1);
 
 /**
- * 
+ *
  */
 native void QSR_GrantSpawnProtection(int userid);
 
 /**
- * 
+ *
  */
 native void QSR_RemoveSpawnProtection(int userid);
 
@@ -85,32 +93,32 @@ native void QSR_RemoveSpawnProtection(int userid);
 ////////////////////////
 
 /**
- * 
+ *
  */
 native bool QSR_PlayerHasCRespawnTime(int userid);
 
 /**
- * 
+ *
  */
 native float QSR_GetPlayerCRespawnTime(int userid);
 
 /**
- * 
+ *
  */
 native void QSR_SetPlayerCRespawnTime(int userid, float time);
 
 /**
- * 
+ *
  */
 native float QSR_GetRespawnTimeLeft(int userid);
 
 /**
- * 
+ *
  */
 native bool QSR_IsPlayerRespawning(int userid);
 
 /**
- * 
+ *
  */
 native void QSR_ForcePlayerRespawn(int userid);
 
@@ -119,12 +127,12 @@ native void QSR_ForcePlayerRespawn(int userid);
 ////////////////////////
 
 /**
- * 
+ *
  */
 native QSRPov QSR_GetPlayerPOV(int userid);
 
 /**
- * 
+ *
  */
 native void QSR_SetPlayerPOV(int userid, QSRPov pov);
 
@@ -133,14 +141,19 @@ native void QSR_SetPlayerPOV(int userid, QSRPov pov);
 ////////////////////////
 
 /**
- * 
+ *
  */
-native int QSR_GetPlayerFOV(int userid)
+native int QSR_GetPlayerFOV(int userid);
 
 /**
- * 
+ *
  */
-native void QSR_SetPlayerFOV(int userid);
+native int QSR_GetPlayerDefaultFOV(int userid);
+
+/**
+ *
+ */
+native void QSR_SetPlayerFOV(int userid, int fov);
 
 ////////////////////////
 //      FRIENDLY      //
@@ -148,14 +161,14 @@ native void QSR_SetPlayerFOV(int userid);
 
 /**
  *  Returns whether a player is friendly or not.
- * 
+ *
  *  @param userid       The userid of the player who we want to check.
  *  @return             True if friendly, false if not.
  */
 native bool QSR_IsPlayerFriendly(int userid);
 
 /**
- * 
+ *
  */
 native void QSR_SetPlayerFriendlyState(int userid, bool state);
 
@@ -166,12 +179,12 @@ native void QSR_SetPlayerFriendlyState(int userid, bool state);
 ////////////////////////
 
 /**
- * 
+ *
  */
 forward Action QSR_OnBreadSpawned_Pre(QSRBreadEntity &bread);
 
 /**
- * 
+ *
  */
 forward void QSR_OnBreadSpawned(QSRBreadEntity bread);
 
@@ -180,32 +193,32 @@ forward void QSR_OnBreadSpawned(QSRBreadEntity bread);
 ////////////////////////
 
 /**
- * 
+ *
  */
 forward void QSR_OnProtectedPlayerHurt(int victim, int attacker, int damageAttempted);
 
 /**
- * 
+ *
  */
 forward void QSR_OnPlayerToggleSP(int userid, bool oldState, bool newState);
 
 /**
- * 
+ *
  */
 forward Action QSR_OnPlayerGrantedSP_Pre(int userid);
 
 /**
- * 
+ *
  */
 forward void QSR_OnPlayerGrantedSP(int userid);
 
 /**
- * 
+ *
  */
 forward Action QSR_OnPlayerLoseSP_Pre(int userid);
 
 /**
- * 
+ *
  */
 forward void QSR_OnPlayerLoseSP(int userid);
 
@@ -214,17 +227,17 @@ forward void QSR_OnPlayerLoseSP(int userid);
 ////////////////////////
 
 /**
- * 
+ *
  */
 forward void QSR_OnChangedRespawnTime(int userid, float oldTime, float newTime);
 
 /**
- * 
+ *
  */
 forward Action QSR_OnPlayerWaitForRespawn(int userid, int team, float &respawnTime);
 
 /**
- * 
+ *
  */
 forward void QSR_OnPlayerRespawned(int userid, int team);
 
@@ -233,7 +246,7 @@ forward void QSR_OnPlayerRespawned(int userid, int team);
 ////////////////////////
 
 /**
- * 
+ *
  */
 forward void QSR_OnPlayerChangePOV(int userid, QSRPov oldPov, QSRPov newPov);
 
@@ -242,21 +255,21 @@ forward void QSR_OnPlayerChangePOV(int userid, QSRPov oldPov, QSRPov newPov);
 ////////////////////////
 
 /**
- * 
+ *
  */
-forward void QSR_OnPlayerChangeFOV(int userid, QSRPov oldPov, QSRPov newPov);
+forward void QSR_OnPlayerChangeFOV(int userid, int oldFOV, int newFOV);
 
 ////////////////////////
 //      FRIENDLY      //
 ////////////////////////
 
 /**
- * 
+ *
  */
 forward void QSR_OnChangedFriendlyState(int userid, bool oldState, bool newState);
 
 /**
- * 
+ *
  */
 forward void QSR_OnFriendlyPlayerHurt(int victim, int attacker, int damageAttempted);
 

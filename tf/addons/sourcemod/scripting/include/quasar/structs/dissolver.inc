@@ -9,11 +9,11 @@ enum DissolveType
     DissolveType_HeavyElectrical,
     DissolveType_LightElectrical,
     DissolveType_Core
-}
+};
 
 /**
  *  Wrapper for an "ent_entity_dissolver" entity.
- * 
+ *
  *  You only need one of these per plugin.
  *  Initialize OnMapStart, close OnMapEnd!!
  */
@@ -24,11 +24,11 @@ methodmap QSRDissolver __nullable__
         int i_idx = CreateEntityByName("env_entity_dissolver");
         PrintToServer("i_idx: %d", i_idx);
 
-        if (i_idx == -1 || !IsValidEdict(i_idx)) 
-        { 
-            return null; 
+        if (i_idx == -1 || !IsValidEdict(i_idx))
+        {
+            return null;
         }
-        
+
         _dissolverIEntRef = EntIndexToEntRef(i_idx);
         return view_as<QSRDissolver>(_dissolverIEntRef);
     }
@@ -51,7 +51,7 @@ methodmap QSRDissolver __nullable__
 
             _dissolverIMagnitude = magnitude;
             DispatchKeyValueInt(i_idx, "magnitude", magnitude);
-        
+
         }
     }
 

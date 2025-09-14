@@ -1,0 +1,102 @@
+"Phrases"
+{
+    "QSR_MiscMainMenuTitle"
+    {
+        "en"    "Miscellaneous Settings"
+    }
+
+    "QSR_MiscMenuFriendlyDisplay"
+    {
+        "en"        "Friendly:"
+    }
+
+    "QSR_MiscMenuSPDisplay"
+    {
+        "en"        "Spawn Protection:"
+    }
+
+    "QSR_MiscMenuRTDisplay"
+    {
+        "en"        "Respawn Time:"
+    }
+
+    "QSR_MiscMenuPOVDisplay"
+    {
+        "en"        "Current POV:"
+    }
+
+    "QSR_MiscMenuFOVDisplay"
+    {
+        "en"        "Current FOV:"
+    }
+
+    "QSR_MiscMenuFriendlyOption"
+    {
+        "en"        "Toggle Friendly"
+    }
+
+    "QSR_MiscMenuSPOption"
+    {
+        "en"        "Toggle Spawn Protection"
+    }
+
+    "QSR_MiscMenuRTOption"
+    {
+        "en"        "Change Respawn Time"
+    }
+
+    "QSR_MiscMenuPOVOption"
+    {
+        "en"        "Change POV"
+    }
+
+    "QSR_MiscMenuFOVOption"
+    {
+        "en"        "Reset FOV"
+    }
+
+    "QSR_RespawnTimeInstant"
+    {
+        "en"        "Instant"
+    }
+
+    "QSR_POVFirstPerson"
+    {
+        "en"        "First Person"
+    }
+
+    "QSR_POVThirdPerson"
+    {
+        "en"        "Third Person"
+    }
+
+    "QSR_ChangedPOV"
+    {
+        "#format"   "{1:s}{2:s}{3:t}"
+        "en"        "{1}You changed your POV to: {2}{3}"
+    }
+
+    "QSR_ChangePOVDeadOrSpecator"
+    {
+        "#format"   "{1:s}"
+        "en"        "{1}You can't change your POV while you're dead or in spectator!"
+    }
+
+    "QSR_ChangeFOVDeadOrSpecator"
+    {
+        "#format"   "{1:s}"
+        "en"        "{1}You can't change your FOV while you're dead or in spectator!"
+    }
+
+    "QSR_ChangedFOV"
+    {
+        "#format"   "{1:s},{2:s},{3:d}"
+        "en"        "{1}You set your FOV to: {2}{3}"
+    }
+
+    "QSR_InvalidFOV"
+    {
+        "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s},{6:d},{7:s}"
+        "en"        "{1:s}You entered an invalid number for your FOV! You entered: {2}{3} {4}(Limit: {5}{6}{7})"
+    }
+}
