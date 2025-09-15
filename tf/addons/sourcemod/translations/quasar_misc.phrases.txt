@@ -99,4 +99,28 @@
         "#format"   "{1:s},{2:s},{3:d},{4:s},{5:s},{6:d},{7:s}"
         "en"        "{1:s}You entered an invalid number for your FOV! You entered: {2}{3} {4}(Limit: {5}{6}{7})"
     }
+
+    "QSR_EnabledSpawnProtection"
+    {
+        "#format"   "{1:s}"
+        "en"        "{1}You enabled spawn protection!"
+    }
+
+    "QSR_DisabledSpawnProtection"
+    {
+        "#format"   "{1:s}"
+        "en"        "{1}You disabled spawn protection!"
+    }
+
+    "QSR_CantChangeSPManually"
+    {
+        "#format"   "{1:s}"
+        "en"        "{1}You cannot change your spawn protection manually!"
+    }
+
+    "QSR_SpawnProtectionNotAvailable"
+    {
+        "#format"   "{1:s}"
+        "en"        "{1}Spawn protection is not available at this time!"
+    }
 }
