@@ -32,6 +32,7 @@ int gI_breadCount = 0;
 
 // Spawn Protection
 QSRSpInfo gST_playerSPInfo[MAXPLAYERS + 1];
+int gI_spMode = 0; // 0 - Default, 1 - Always On, 2 - Always Off
 
 // Third Person
 QSRPov gE_customPOVs[MAXPLAYERS + 1] = {POV_FirstPerson, ...};
@@ -45,7 +46,7 @@ int gI_defaultFOV[MAXPLAYERS+1] = {DEFAULT_FOV, ...};
 bool gB_isFriendly[MAXPLAYERS + 1] = {false, ...};
 
 // Respawn Time
-float gF_respawnTimes[MAXPLAYERS+1] = {0.0, ...};
+QSRRepsawnInfo gST_respawnTimes[MAXPLAYERS + 1];
 
 //* FORWARDS */
 
@@ -63,7 +64,6 @@ Handle gH_FWD_onPlayerLoseSP            = INVALID_HANDLE;
 
 // Respawn Time
 Handle gH_FWD_onChangedRespawnTime      = INVALID_HANDLE;
-Handle gH_FWD_onPlayerWaitForRespawn    = INVALID_HANDLE;
 Handle gH_FWD_onPlayerRespawned         = INVALID_HANDLE;
 
 // Third Person
@@ -176,7 +176,6 @@ public void OnPluginStart()
     gH_FWD_onPlayerLoseSPPre        = CreateGlobalForward("QSR_OnPlayerLoseSP_Pre",     ET_Hook,    Param_Cell);
     gH_FWD_onPlayerRespawned        = CreateGlobalForward("QSR_OnPlayerRespawned",      ET_Ignore,  Param_Cell, Param_Cell);
     gH_FWD_onPlayerToggleSP         = CreateGlobalForward("QSR_OnPlayerToggleSP",       ET_Ignore,  Param_Cell, Param_Cell, Param_Cell);
-    gH_FWD_onPlayerWaitForRespawn   = CreateGlobalForward("QSR_OnPlayerWaitForRespawn", ET_Hook,    Param_Cell, Param_Cell, Param_CellByRef);
     gH_FWD_onProtectedPlayerHurt    = CreateGlobalForward("QSR_OnProtectedPlayerHurt",  ET_Ignore,  Param_Cell, Param_Cell, Param_Cell);
     gH_FWD_onChangeFOV              = CreateGlobalForward("QSR_OnPlayerChangeFOV",      ET_Ignore,  Param_Cell, Param_Cell, Param_Cell)
 
@@ -203,7 +202,7 @@ public void OnPluginStart()
     gH_CVR_spawnProtectionStatus    = AutoExecConfig_CreateConVar("sm_quasar_misc_spawn_protection_status",             "1",                "");
     gH_CVR_disableSPOnRoundEnd      = AutoExecConfig_CreateConVar("sm_quasar_misc_spawn_protection_disable_round_end",  "1",                "");
     gH_CVR_respawnTimeMinimum       = AutoExecConfig_CreateConVar("sm_quasar_misc_respawn_time_minimum",                "0",                "");
-    gH_CVR_respawnTimeMaximum       = AutoExecConfig_CreateConVar("sm_quasar_misc_respawn_time_maximum",                "0",                "");
+    gH_CVR_respawnTimeMaximum       = AutoExecConfig_CreateConVar("sm_quasar_misc_respawn_time_maximum",                "0",                "Set automatically by the plugin, always matches mp_respawnwavetime");
     gH_CVR_respawnTimeDefault       = AutoExecConfig_CreateConVar("sm_quasar_misc_respawn_time_default",                "-1",               "");
     gH_CVR_skipEndingScoreboard     = AutoExecConfig_CreateConVar("sm_quasar_misc_skip_scoreboard",                     "1",                "Skips the ending scoreboard allowing for quicker map transitions.");
     gH_CVR_customFOVMinimum         = AutoExecConfig_CreateConVar("sm_quasar_misc_fov_minimum",                         "10",               "");
@@ -243,6 +242,7 @@ public void OnPluginStart()
     HookEvent("player_spawn", Event_OnPlayerSpawn);
     HookEvent("player_hurt", Event_OnPlayerHurt);
     HookEvent("player_teleported", Event_OnPlayerTeleported);
+    HookEvent("player_death", Event_OnPlayerDeath);
 
     // TODO: Handle late load here!
     if (gB_late)
@@ -329,8 +329,16 @@ public void OnConfigsExecuted()
         if (!CommandExists("sm_rst"))
             RegConsoleCmd("sm_rst",         CMD_RespawnTime);
 
+        ConVar mp_respawnwavetime = FindConVar("mp_respawnwavetime");
+        if (mp_respawnwavetime != null &&
+            gH_CVR_respawnTimeMaximum.IntValue != mp_respawnwavetime.IntValue)
+        {
+            if (mp_respawnwavetime <= 0.0) { gH_CVR_respawnTimeMaximum.SetInt(5); }
+            else                           { gH_CVR_respawnTimeMaximum.SetInt(mp_respawnwavetime.IntValue) }
+            mp_respawnwavetime.Close();
+        }
+
         ServerCommand("mp_disable_respawn_times 0");
-        ServerCommand("mp_respawnwavetime 120");
     }
 
     if (gH_CVR_useThirdPerson.BoolValue)
@@ -431,6 +439,16 @@ void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue
     else if (convar == gH_CVR_useSpawnProtection     && (StringToInt(newValue) == 0 || StrEqual(newValue, "false", false)))  { gI_moduleFlags &= MISCMOD_SP; }
     else if (convar == gH_CVR_useThirdPerson         && (StringToInt(newValue) == 0 || StrEqual(newValue, "false", false)))  { gI_moduleFlags &= MISCMOD_TP; }
     else if (convar == gH_CVR_useCustomFOV           && (StringToInt(newValue) == 0 || StrEqual(newValue, "false", false)))  { gI_moduleFlags &= MISCMOD_FOV; }
+
+    // Spawn Protection Settings
+    else if (convar == gH_CVR_spawnProtectionMode)
+    {
+        int mode = StringToInt(newValue);
+        if (mode > 2)       { mode = 2; }
+        else if (mode < 0)  { mode = 0; }
+
+        gI_spMode = mode;
+    }
 }
 
 public void OnMapStart()
@@ -453,7 +471,7 @@ public void OnClientConnected(int client)
     gE_customPOVs[client] = POV_FirstPerson;
     gE_defaultPOVs[client] = POV_FirstPerson;
     gB_isFriendly[client] = false;
-    gF_respawnTimes[client] = 0.0;
+    gST_respawnTimes[client].Reset();
     gST_playerSPInfo[client].Reset();
 }
 
@@ -464,7 +482,7 @@ public void OnClientDisconnect_Post(int client)
     gI_customFOV[client] = DEFAULT_FOV;
     gI_defaultFOV[client] = DEFAULT_FOV;
     gB_isFriendly[client] = false;
-    gF_respawnTimes[client] = 0.0;
+    gST_respawnTimes[client].Reset();
     gST_playerSPInfo[client].Reset();
 }
 
@@ -474,7 +492,7 @@ public void OnClientCookiesCached(int client)
     gI_customFOV[client]                    = gH_CK_customFOV.GetInt(client);
     gE_defaultPOVs[client]                  = view_as<QSRPov>(gH_CK_customPOV.GetInt(client));
     gB_isFriendly[client]                   = view_as<bool>(gH_CK_autoEnableFriendly.GetInt(client));
-    gF_respawnTimes[client]                 = gH_CK_customRespawnLength.GetFloat(client);
+    gST_respawnTimes[client].f_respawnTime  = gH_CK_customRespawnLength.GetFloat(client);
     gST_playerSPInfo[client].b_enabled      = view_as<bool>(gH_CK_autoEnableSP.GetInt(client));
 }
 
@@ -512,9 +530,28 @@ void Event_OnPlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 
     if (gH_CVR_useSpawnProtection.BoolValue)
     {
-        if (QSR_PlayerEnabledSP(i_player))
+        switch(gI_spMode)
         {
-            QSR_GrantSpawnProtection(i_player);
+            // Default mode.
+            case 0:
+            {
+                if (QSR_PlayerEnabledSP(i_player))
+                {
+                    QSR_GrantSpawnProtection(i_player);
+                }
+            }
+
+            // Always on
+            case 1:
+            {
+                QSR_GrantSpawnProtection(i_player);
+            }
+
+            // Always off
+            case 2:
+            {
+                // nothing to do currently.
+            }
         }
     }
 }
@@ -570,6 +607,29 @@ void Event_OnPlayerTeleported(Event event, const char[] name, bool dontBroadcast
     }
 }
 
+void Event_OnPlayerDeath(Event event, const char[] name, bool dontBroadcast)
+{
+    int i_userid = event.GetInt("userid"),
+        i_client = GetClientOfUserId(i_userid);
+
+    if (gH_CVR_useCustomRespawnTimes.BoolValue && QSR_IsValidClient(i_client))
+    {
+        if (gST_respawnTimes[i_client].f_respawnTime <= 0.0)
+        {
+            TF2_RespawnPlayer(i_client);
+            Call_StartForward(gH_FWD_onPlayerRespawned);
+            Call_PushCell(i_userid);
+            Call_PushCell(TF2_GetClientTeam(i_client));
+            Call_Finish();
+            return;
+        }
+
+        gST_respawnTimes[i_client].f_respawnTimeLeft = gST_respawnTimes[i_client].f_respawnTime;
+        gST_respawnTimes[i_client].b_waiting = true;
+        gST_respawnTimes[i_client].h_respawnTimer = CreateTimer(0.1, Timer_Respawn, i_userid);
+    }
+}
+
 public void QSR_OnLogFileMade(File& file)
 {
     gH_logFile = file;
@@ -617,7 +677,7 @@ public void QSR_OnSystemSoundsRetrieved(StringMap sounds)
 
 public Action SteamWorks_RestartRequested()
 {
-    if (gB_SteamWorks)
+    if (gB_SteamWorks && QSR_UsingMiscModule(MiscModule_AutoRestart))
     {
         if (GetClientCount() > 0)
         {
@@ -626,7 +686,7 @@ public Action SteamWorks_RestartRequested()
             return Plugin_Continue;
         }
 
-        ServerCommand("restart");
+        ServerCommand("exit");
     }
     return Plugin_Continue;
 }
@@ -986,40 +1046,94 @@ any Native_QSRPlayerHasCRespawnTime(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_PlayerHasCRespawnTime: userid %d is not a valid target!", i_userid);
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_PlayerHasCRespawnTime: ERROR! userid %d is not valid!", i_userid);
         return false;
     }
 
+    return (gST_respawnTimes[client].f_respawnTime !=
+            gH_CVR_respawnTimeDefault.FloatValue);
 }
 
 any Native_QSRGetPlayerCRespawnTime(Handle plugin, int numParams)
 {
     int i_userid = GetNativeCell(1),
         i_client = GetClientOfUserId(i_userid);
+
+    if (!QSR_IsValidClient(i_client))
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_GetPlayerCRespawnTime: ERROR! userid %d is not valid!", userid);
+        return -1.0;
+    }
+
+    return (gST_respawnTimes[client].f_respawnTime);
 }
 
 void Native_QSRSetPlayerCRespawnTime(Handle plugin, int numParams)
 {
     int i_userid = GetNativeCell(1),
         i_client = GetClientOfUserId(i_userid);
+
+    if (!QSR_IsValidClient(i_client))
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_SetPlayerCRespawnTime: ERROR! userid %d is not valid!", userid);
+        return;
+    }
+
+    //void QSR_OnChangedRespawnTime(int userid, float oldTime, float newTime)
+    Call_StartForward(gH_FWD_onChangedRespawnTime);
+    Call_PushCell(i_userid);
+    Call_PushCell(gST_respawnTimes[client].f_respawnTime);
+    gST_respawnTimes[client].f_respawnTime = GetNativeCell(2);
+    Call_PushCell(GetNativeCell(2));
+    Call_Finish();
 }
 
 any Native_QSRGetRespawnTimeLeft(Handle plugin, int numParams)
 {
     int i_userid = GetNativeCell(1),
         i_client = GetClientOfUserId(i_userid);
+
+    if (!QSR_IsValidClient(i_client))
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_GetRespawnTimeLeft: ERROR! userid %d is not valid!", userid);
+        return -1.0;
+    }
+
+    return gST_respawnTimes[client].f_respawnTimeLeft;
 }
 
 any Native_QSRIsPlayerRespawning(Handle plugin, int numParams)
 {
     int i_userid = GetNativeCell(1),
         i_client = GetClientOfUserId(i_userid);
+
+    if (!QSR_IsValidClient(i_client))
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_IsPlayerRespawning: ERROR! userid %d is not valid!", userid);
+        return false;
+    }
+
+    return gST_respawnTimes[client].b_waiting;
 }
 
 void Native_QSRForcePlayerRespawn(Handle plugin, int numParams)
 {
     int i_userid = GetNativeCell(1),
         i_client = GetClientOfUserId(i_userid);
+
+    if (!QSR_IsValidClient(i_client))
+    {
+        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_ForcePlayerRespawn: ERROR! userid %d is not valid!", userid);
+        return;
+    }
+
+    gST_respawnTimes[client].Reset();
+
+    Call_StartForward(gH_FWD_onPlayerRespawned);
+    Call_PushCell(i_userid);
+    Call_PushCell(TF2_GetClientTeam(i_client));
+    Call_Finish();
+    TF2_RespawnPlayer(i_client);
 }
 
 // Third Person
@@ -1173,7 +1287,7 @@ void ShowMiscMenu(int client)
      * 2. Toggle Spawn Protection
      * 3. Change Respawn Time
      * 4. Change POV
-     * 5. Change FOV
+     * 5. Reset FOV
      */
 
     char display[256];
@@ -1190,12 +1304,12 @@ void ShowMiscMenu(int client)
         FormatEx(display, sizeof(display),
             "%s%T Off\n", display, "QSR_MiscMenuSPDisplay", client);
 
-    if (gF_respawnTimes[client] <= 0.0)
+    if (gST_respawnTimes[client].f_respawnTime <= 0.0)
         FormatEx(display, sizeof(display),
             "%s%T %T\n", display, "QSR_MiscMenuRTDisplay", client, "QSR_RespawnTimeInstant", client);
     else
         FormatEx(display, sizeof(display),
-            "%s%T %.2f\n", display, "QSR_MiscMenuRTDisplay", gF_respawnTimes[client]);
+            "%s%T %.2f\n", display, "QSR_MiscMenuRTDisplay", gST_respawnTimes[client].f_respawnTime);
 
     (gE_customPOVs[client] == POV_FirstPerson) ?
         FormatEx(display, sizeof(display),
@@ -1231,13 +1345,35 @@ void ShowMiscMenu(int client)
     miscMenu.Display(client, 20);
 }
 
+// Respawn Times
+void ShowRespawnTimeMenu(int client)
+{
+    Menu rtMenu = new Menu(Handler_RespawnTimeMenu);
+    rtMenu.SetTitle("Choose a new respawn time:");
+
+    char info[8], display[32];
+    for (float i; i < gH_CVR_respawnTimeMaximum.FloatValue; i += 0.5)
+    {
+        FloatToString(i, info, sizeof(info));
+
+        if (i == 0.0)
+            FormatEx(display, sizeof(display),
+                "%T", "QSR_RespawnTimeInstant", client);
+        else
+            FormatEx(display, sizeof(display),
+                "%T", "QSR_RespawnTimeDisplay", client, i);
+        rtMenu.AddItem(info, display);
+    }
+
+    rtMenu.Display(client, 20);
+}
 
 // CALLBACKS
 
 // GENERAL
 void Timer_RestartServer(Handle timer)
 {
-    ServerCommand("restart");
+    ServerCommand("exit");
 }
 
 Action Timer_PollForCookies(Handle timer, int client)
@@ -1517,9 +1653,25 @@ Action CMD_SpawnProtection(int client, int args)
 
 Action Timer_Respawn(Handle timer, int userid)
 {
+    int i_client = GetClientOfUserId(userid);
 
+    if (QSR_IsValidClient(i_client))
+    {
+        if (gST_respawnTimes[i_client].f_respawnTimeLeft > 0.0)
+        {
+            gST_respawnTimes[i_client].f_respawnTimeLeft -= 0.1;
+            return Plugin_Continue;
+        }
 
-    return Plugin_Handled;
+        gST_respawnTimes[i_client].Reset();
+        TF2_RespawnPlayer(i_client);
+        Call_StartForward(gH_FWD_onPlayerRespawned);
+        Call_PushCell(userid);
+        Call_PushCell(TF2_GetClientTeam(i_client));
+        Call_Finish();
+    }
+
+    return Plugin_Stop;
 }
 
 Action CMD_RespawnTime(int client, int args)
@@ -1527,6 +1679,52 @@ Action CMD_RespawnTime(int client, int args)
     if (!client || !QSR_UsingMiscModule(MiscModule_CustomRespawnTimes))
     {
         return Plugin_Handled;
+    }
+
+    int i_userid = QSR_IsValidClient(client);
+
+    if (i_userid)
+    {
+        if (!args) { ShowRespawnTimeMenu(client); }
+        else
+        {
+            char info[8];
+            float desiredRT;
+            GetCmdArg(1, info, sizeof(info));
+            desiredRT = StringToFloat(info);
+
+            if (desiredRT == 0.0)
+            {
+                QSR_NotifyUser(i_userid, gST_sounds.s_infoSound, "%t",
+                    "QSR_ChangedRespawnTime", gST_chatFormatting.s_actionColor,
+                    gST_chatFormatting.s_commandColor, "QSR_RespawnTimeInstant");
+                QSR_SetPlayerCRespawnTime(i_userid, 0.0);
+                return Plugin_Handled;
+            }
+            else if (desiredRT > gH_CVR_respawnTimeMaximum.FloatValue)
+            {
+                QSR_NotifyUser(i_userid, gST_sounds.s_errorSound, "%t",
+                    "QSR_InvalidRespawnTime", gST_chatFormatting.s_errorColor,
+                    gST_chatFormatting.s_commandColor, desiredRT,
+                    gST_chatFormatting.s_errorColor, gST_chatFormatting.s_commandColor,
+                    gH_CVR_respawnTimeMaximum.FloatValue, gST_chatFormatting.s_errorColor);
+                return Plugin_Handled;
+            }
+            else if (desiredRT < gH_CVR_respawnTimeMinimum.FloatValue)
+            {
+                QSR_NotifyUser(i_userid, gST_sounds.s_errorSound, "%t",
+                    "QSR_InvalidRespawnTime", gST_chatFormatting.s_errorColor,
+                    gST_chatFormatting.s_commandColor, desiredRT,
+                    gST_chatFormatting.s_errorColor, gST_chatFormatting.s_commandColor,
+                    gH_CVR_respawnTimeMaximum.FloatValue, gST_chatFormatting.s_errorColor);
+                return Plugin_Handled;
+            }
+
+            QSR_NotifyUser(i_userid, gST_sounds.s_infoSound, "%t",
+                "QSR_ChangedRespawnTime", gST_chatFormatting.s_actionColor,
+                gST_chatFormatting.s_commandColor, "QSR_RespawnTimeDisplay", desiredRT);
+            QSR_SetPlayerCRespawnTime(i_userid, desiredRT);
+        }
     }
 
     return Plugin_Handled;

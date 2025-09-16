@@ -234,12 +234,7 @@ forward void QSR_OnChangedRespawnTime(int userid, float oldTime, float newTime);
 /**
  *
  */
-forward Action QSR_OnPlayerWaitForRespawn(int userid, int team, float &respawnTime);
-
-/**
- *
- */
-forward void QSR_OnPlayerRespawned(int userid, int team);
+forward void QSR_OnPlayerRespawned(int userid, TFTeam team);
 
 ////////////////////////
 //    THIRD PERSON    //

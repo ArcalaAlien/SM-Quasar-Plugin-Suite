@@ -60,6 +60,12 @@
         "en"        "Instant"
     }
 
+    "QSR_RespawnTimeDisplay"
+    {
+        "#format"   "{1:.2f}"
+        "en"        "{1}s"
+    }
+
     "QSR_POVFirstPerson"
     {
         "en"        "First Person"
@@ -123,4 +129,17 @@
         "#format"   "{1:s}"
         "en"        "{1}Spawn protection is not available at this time!"
     }
+
+    "QSR_InvalidRespawnTime"
+    {
+        "#format"   "{1:s},{2:s},{3:.2f},{4:s},{5:s},{6:.2f},{7:s}"
+        "en"        "{1}You entered an invalid amount for your respawn time! You entered: {2}{3} {4}(Limit: {5}{6}{7})"
+    }
+
+    "QSR_ChangedRespawnTime"
+    {
+        "#format"   "{1:s}{2:s}{3:t}"
+        "en"        "{1}You changed your respawn time to: {2}{3}"
+    }
+
 }

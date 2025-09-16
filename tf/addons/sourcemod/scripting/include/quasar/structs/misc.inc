@@ -80,6 +80,7 @@ enum struct QSRSpInfo
 enum struct QSRRespawnInfo
 {
     float  f_respawnTime;
+    float  f_respawnTimeLeft;
     bool   b_waiting;
 
     Handle h_respawnTimer;
@@ -93,6 +94,7 @@ enum struct QSRRespawnInfo
         }
 
         this.f_respawnTime = 5.0;
+        this.f_respawnTimeLeft = 0.0;
         this.b_waiting     = false;
     }
 }
