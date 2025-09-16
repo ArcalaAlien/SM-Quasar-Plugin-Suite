@@ -33,8 +33,8 @@ Handle gH_FWD_chatFormatRetrieved = null;
 Handle gH_FWD_soundsRetrieved = null;
 
 // ConVars
-ConVar gH_CVR_subdomain = null; 
-ConVar gH_CVR_dbConfig = null; 
+ConVar gH_CVR_subdomain = null;
+ConVar gH_CVR_dbConfig = null;
 ConVar gH_CVR_queryLogFile = null;
 ConVar gH_CVR_skipEndingScoreboard = null;
 
@@ -91,7 +91,7 @@ public void OnPluginStart()
 
     // AutoExecConfig Setup
     AutoExecConfig_SetFile("plugin.quasar_core");
-    
+
     // Important Options
     gH_CVR_dbConfig             = AutoExecConfig_CreateConVar("sm_quasar_db_profile",           "",                 "The default database configuration to use for Quasar", FCVAR_PROTECTED);
     gH_CVR_subdomain            = AutoExecConfig_CreateConVar("sm_quasar_subdomain",            "",                 "Controls what server subdomain the system is running on. [surf0].surfnturf.games The boxed area is a subdomain. Used to get and set player statistics across different servers.", FCVAR_NONE);
@@ -150,7 +150,7 @@ public void OnPluginEnd()
     gST_sounds.Empty();
     gH_db.Close();
     gH_dbLogFile.Close();
-    
+
     // Important
     gH_CVR_dbConfig.Close();
     gH_CVR_subdomain.Close();
@@ -268,7 +268,7 @@ public void OnMapStart()
     if (gB_dbConnected)
     {
         char s_query[512];
-        FormatEx(s_query, sizeof(s_query), 
+        FormatEx(s_query, sizeof(s_query),
         "SELECT vtf, vmt \
         FROM str_trails");
         QSR_LogQuery(gH_dbLogFile, gH_db, s_query, SQLCB_PrecacheTrails);
@@ -288,7 +288,7 @@ public void OnMapEnd()
 
 void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-    
+
 }
 
 /*
@@ -427,8 +427,8 @@ void Timer_RestartServer(Handle timer)
 
 /**
  *  Grabs the db config from the corresponding cvars.
- *  
- * */ 
+ *
+ * */
 void RefreshDatabaseConfig()
 {
     gH_CVR_dbConfig.GetString(gS_dbProfile, sizeof(gS_dbProfile));
@@ -512,7 +512,7 @@ void SQLCB_PrecacheSounds(Database db, DBResultSet results, const char[] error, 
         while (results.FetchRow())
         {
             results.FetchString(0, s_soundfile, sizeof(s_soundfile));
-            
+
             AddFileToDownloadsTable(s_soundfile);
             PrecacheSound(s_soundfile);
         }
@@ -529,7 +529,7 @@ void Timer_RetryPrecacheTrails(Handle timer)
     }
 
     char s_query[512];
-    FormatEx(s_query, sizeof(s_query), 
+    FormatEx(s_query, sizeof(s_query),
     "SELECT vtf, vmt \
     FROM str_trails");
     QSR_LogQuery(gH_dbLogFile, gH_db, s_query, SQLCB_PrecacheTrails);

@@ -1346,10 +1346,11 @@ void ShowMiscMenu(int client)
 }
 
 // Respawn Times
-void ShowRespawnTimeMenu(int client)
+void ShowRespawnTimeMenu(int client, bool exitBack = false)
 {
     Menu rtMenu = new Menu(Handler_RespawnTimeMenu);
     rtMenu.SetTitle("Choose a new respawn time:");
+    rtMenu.ExitBackButton = exitBack;
 
     char info[8], display[32];
     for (float i; i < gH_CVR_respawnTimeMaximum.FloatValue; i += 0.5)
@@ -1457,7 +1458,7 @@ int Handler_MiscMenuMain(Menu menu, MenuAction action, int param1, int param2)
                     // Change Respawn Time
                     case '3':
                     {
-                        //ShowRTMenu(param1);
+                        ShowRespawnTimeMenu(param1, true);
                     }
 
                     // Change POV
@@ -1650,6 +1651,56 @@ Action CMD_SpawnProtection(int client, int args)
 }
 
 // Respawn Times
+
+int Handler_RespawnTimeMenu(Menu menu, MenuAction action, int param1, int param2)
+{
+    switch (action)
+    {
+        case MenuAction_Select:
+        {
+            char info[8];
+            GetMenuItem(menu, param2, info, sizeof(info));
+
+            int i_userid = QSR_IsValidClient(param1);
+            if (i_userid)
+            {
+                float desiredRT = StringToFloat(info);
+                if (desiredRT == 0.0)
+                {
+                    QSR_NotifyUser(i_userid, gST_sounds.s_infoSound, "%t",
+                        "QSR_ChangedRespawnTime", gST_chatFormatting.s_actionColor,
+                        gST_chatFormatting.s_commandColor, "QSR_RespawnTimeInstant");
+                }
+                else
+                {
+                    QSR_NotifyUser(i_userid, gST_sounds.s_infoSound, "%t",
+                        "QSR_ChangedRespawnTime", gST_chatFormatting.s_actionColor,
+                        gST_chatFormatting.s_commandColor, "QSR_RespawnTimeDisplay", desiredRT);
+                }
+
+                QSR_SetPlayerCRespawnTime(i_userid, desiredRT);
+
+                if (menu.ExitBackButton)
+                {
+                    ShowMiscMenu(param1);
+                }
+            }
+        }
+
+        case MenuAction_Cancel:
+        {
+            if (param2 == MenuCancel_ExitBack)
+            {
+                ShowMiscMenu(param1);
+            }
+        }
+
+        case MenuAction_End:
+        {
+            delete menu;
+        }
+    }
+}
 
 Action Timer_Respawn(Handle timer, int userid)
 {
