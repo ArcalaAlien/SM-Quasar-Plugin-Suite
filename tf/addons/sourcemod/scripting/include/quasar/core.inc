@@ -29,7 +29,7 @@ public SharedPlugin __pl_quasarcore =
 
 public __pl_quasarcore_SetNTVOptional()
 {
-    MarkNativeAsOptional("QSR_GetSystemSounds");
+    MarkNativeAsOptional("QSR_GetSQLSettings");
     MarkNativeAsOptional("QSR_GetSystemFormatting");
     MarkNativeAsOptional("QSR_PrintToChat");
     MarkNativeAsOptional("QSR_PrintToChatAll");
@@ -101,19 +101,12 @@ enum struct QSRGeneralSounds
 /* NATIVES */
 /*         */
 
-/**
- *  Returns a struct with all the filepaths to sounds the system will use.
- *
- *  @return     A QSRGeneralSounds obj with the filepath to each system sound
- */
-native void QSR_GetSystemSounds(QSRGeneralSounds sound);
+
 
 /**
- *  Returns a struct with all the chat formatting the system uses.
- *
- *  @return     A QSRChatFormat obj with chat colors and the system prefix.
- */
-native void QSR_GetSystemFormatting();
+ *  Manually refresh the Quasar database.
+*/
+native void QSR_RefreshDatabase();
 
 /**
  *  Automatically appends the quasar prefix to a message to send to a valid client
@@ -179,9 +172,11 @@ native bool QSR_NotifyUser(int userid, const char[] sound, const char[] message,
 /**
  *  Fires once the core plugin has connected to the Quasar database.
  *
- *  @param db       A reference to the Database handle in the core plugin.
+ *  @param db           A reference to the Database handle in the core plugin.
+ *  @param subdomain    The subdomain used during the creation of the tables, EX. tf2.mywebsite.com's subdomain would be "tf2"
+ *  @param subdomainLen length of the subdomain.
  */
-forward void QSR_OnDatabaseConnected(Database& db);
+forward void QSR_OnDatabaseConnected(Database& db, char[] subdomain, int subdomainLen);
 
 
 /**
@@ -232,7 +227,7 @@ stock int QSR_IsValidClient(int client)
  */
 stock int QSR_IsValidClientEX(int client)
 {
-    if (client && IsClientInGame(client) && !IsFakeClient(client) && QSR_IsPlayerAlive(GetClientUserId(client))) { return GetClientUserId(client); }
+    if (client && IsClientInGame(client) && !IsFakeClient(client) && IsPlayerAlive(GetClientUserId(client))) { return GetClientUserId(client); }
 
     return 0;
 }

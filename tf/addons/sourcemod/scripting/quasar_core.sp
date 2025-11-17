@@ -20,11 +20,11 @@ int gI_fetchTrailsAttempts;
 int gI_fetchSoundsAttempts;
 
 // Database
-char gS_subdomain[64];
-char gS_dbProfile[64]; // The database profile name in databases.cfg
-bool gB_dbConnected = false; // Are we connected to the database yet?
-Database gH_db = null; // The handle for the Database
-File gH_dbLogFile = null;
+static char gS_subdomain[64];
+static char gS_dbProfile[64]; // The database profile name in databases.cfg
+static bool gB_dbConnected = false; // Are we connected to the database yet?
+static Database gH_db = null; // The handle for the Database
+static File gH_dbLogFile = null;
 
 // Forwards
 Handle gH_FWD_dbConnected = null; // Called when we've successfully connected to the database.
@@ -84,7 +84,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 public void OnPluginStart()
 {
     // Forwards
-    gH_FWD_dbConnected = CreateGlobalForward("QSR_OnDatabaseConnected", ET_Ignore, Param_CellByRef);
+    gH_FWD_dbConnected = CreateGlobalForward("QSR_OnDatabaseConnected", ET_Ignore, Param_CellByRef, Param_Array, Param_Cell);
     gH_FWD_logCreated = CreateGlobalForward("QSR_OnLogFileMade", ET_Ignore, Param_CellByRef);
     gH_FWD_chatFormatRetrieved = CreateGlobalForward("QSR_OnSystemFormattingRetrieved", ET_Ignore, Param_Cell);
     gH_FWD_soundsRetrieved = CreateGlobalForward("QSR_OnSystemSoundsRetrieved", ET_Ignore, Param_Cell);
@@ -303,6 +303,8 @@ void Native_QSRRefreshDatabase(Handle plugin, int numParams)
     CMD_DB_Refresh(0, 0);
 }
 
+
+
 any Native_QSRPrintToChat(Handle plugin, int numParams)
 {
     int client = GetClientOfUserId(GetNativeCell(1));
@@ -469,6 +471,8 @@ void SQLCB_OnConnect(Database db, const char[] error, any data)
 
     Call_StartForward(gH_FWD_dbConnected);
     Call_PushCellRef(gH_db);
+    Call_PushString(gS_subdomain);
+    Call_PushCell(sizeof(gS_subdomain));
     Call_Finish();
 }
 

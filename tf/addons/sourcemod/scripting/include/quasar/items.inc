@@ -3,6 +3,9 @@
 #endif
 #define _quasar_items_included
 
+#undef   MODULE_NAME
+#define  MODULE_NAME "Items"
+
 public SharedPlugin __pl_quasaritems =
 {
     name="quasar_items",

@@ -4,8 +4,7 @@
 #include <quasar/core>
 #include <quasar/players>
 #include <quasar/items>
-#undef   MODULE_NAME
-#define  MODULE_NAME "Items"
+
 
 #include <autoexecconfig>
 
@@ -60,7 +59,7 @@ public void QSR_OnDatabaseConnected(Database& db)
     WHERE steam_id = ?", s_error, sizeof(s_error)));
     if (s_error[0])
     {
-        QSR_LogMessage(gH_logFile, s_error);
+        QSR_LogMessage(gH_logFile, MODULE_NAME,  s_error);
         s_error = EMPTY_STRING;
     }
 
@@ -70,7 +69,7 @@ public void QSR_OnDatabaseConnected(Database& db)
     WHERE steam_id = ?", s_error, sizeof(s_error)));
     if (s_error[0])
     {
-        QSR_LogMessage(gH_logFile, s_error);
+        QSR_LogMessage(gH_logFile, MODULE_NAME,  s_error);
         s_error = EMPTY_STRING;
     }
 
@@ -80,7 +79,7 @@ public void QSR_OnDatabaseConnected(Database& db)
     WHERE steam_id = ?", s_error, sizeof(s_error)));
     if (s_error[0])
     {
-        QSR_LogMessage(gH_logFile, s_error);
+        QSR_LogMessage(gH_logFile, MODULE_NAME,  s_error);
         s_error = EMPTY_STRING;
     }
 
@@ -90,7 +89,7 @@ public void QSR_OnDatabaseConnected(Database& db)
     WHERE steam_id = ?", s_error, sizeof(s_error)));
     if (s_error[0])
     {
-        QSR_LogMessage(gH_logFile, s_error);
+        QSR_LogMessage(gH_logFile, MODULE_NAME,  s_error);
         s_error = EMPTY_STRING;
     }
 
@@ -106,11 +105,11 @@ public void QSR_OnDatabaseConnected(Database& db)
     WHERE steam_id = ?", s_error, sizeof(s_error)));
     if (s_error[0])
     {
-        QSR_LogMessage(gH_logFile, s_error);
+        QSR_LogMessage(gH_logFile, MODULE_NAME,  s_error);
         s_error = EMPTY_STRING;
     }
 
-    QSR_LogMessage(gH_logFile, "Prepared all query statements!");
+    QSR_LogMessage(gH_logFile, MODULE_NAME,  "Prepared all query statements!");
 }
 
 public void QSR_OnLogFileMade(File& file)
@@ -148,7 +147,7 @@ void QSR_SendInventoryMenu(int client)
     // Add Upgrade Category
     FormatEx(display, sizeof(display), "%T", client, "QSR_UpgradeCategory");
     h_inventoryMenu.AddItem("3", display);
-    
+
     h_inventoryMenu.Display(client, 30);
 }
 
@@ -161,7 +160,7 @@ void Timer_PopulatePlayerUpgrades(Handle timer, int client)
         if (gST_player[client].i_fetchUpgradesAttempts == 5)
         {
             QSR_LogMessage("ERROR: Unable to get player upgrades for SteamID %s after 5 attempts!", gST_player[client].s_steam64ID);
-            QSR_NotifyUser(GetClientUserId(client), gST_sounds.s_errorSound, 
+            QSR_NotifyUser(GetClientUserId(client), gST_sounds.s_errorSound,
             "%t", "QSR_UnableToFetchUpgrade",
             gST_chatFormatStrings.s_errorColor, gST_chatFormatStrings.s_commandColor, gST_chatFormatStrings.s_errorColor);
             gST_player[client].i_fetchUpgradesAttempts = 0;
@@ -185,7 +184,7 @@ void Timer_PopulateQSRLoadout(Handle timer, int client)
         if (gST_player[client].i_fetchQSRLoadoutAttempts == 5)
         {
             QSR_LogMessage("ERROR: Unable to get Quasar items for SteamID %s after 5 attempts!", gST_player[client].s_steam64ID);
-            QSR_NotifyUser(GetClientUserId(client), gST_sounds.s_errorSound, 
+            QSR_NotifyUser(GetClientUserId(client), gST_sounds.s_errorSound,
             "%t", "QSR_UnableToFetchQSRItems",
             gST_chatFormatStrings.s_errorColor, gST_chatFormatStrings.s_commandColor, gST_chatFormatStrings.s_errorColor);
             gST_player[client].i_fetchQSRLoadoutAttempts = 5;
@@ -222,7 +221,7 @@ void Timer_PopulatePlayerSounds(Handle timer, int client)
         }
 
         char s_query[512];
-        FormatEx(s_query, sizeof(s_query), 
+        FormatEx(s_query, sizeof(s_query),
         "SELECT loadout_id, slot, item_id \
         FROM str_soundslots \
         WHERE `steam_id`='%s'", gST_player[client].s_steam64ID);
@@ -267,7 +266,7 @@ void SQLCB_PopulatePlayerUpgrades(Database db, DBResultSet results, const char[]
         QSR_LogMessage("Unable to fetch player upgrades! Attempting again in 5s.\nERROR: %s", error);
         return;
     }
-    
+
     char s_itemId[64];
     if (results.HasResults)
     {
@@ -322,11 +321,11 @@ void SQLCB_PopulateQSRLoadout(Database db, DBResultSet results, const char[] err
 
             strcopy(CLIENT_QSR_LOADOUT.st_equippedTrail.s_itemID,       sizeof(CLIENT_QSR_LOADOUT.st_equippedTrail.s_itemID),       s_trailID);
             strcopy(CLIENT_QSR_LOADOUT.st_equippedTag.s_itemID,         sizeof(CLIENT_QSR_LOADOUT.st_equippedTag.s_itemID),         s_tagID);
-            
+
             // Once we fetch all of the Item IDs we need we can populate each item's info.
             CLIENT_QSR_LOADOUT.st_equippedTag.Get();
             CLIENT_QSR_LOADOUT.st_equippedTrail.Get();
-            
+
             strcopy(CLIENT_QSR_LOADOUT.s_nameColor,                     sizeof(CLIENT_QSR_LOADOUT.s_nameColor), s_nameColor);
             strcopy(CLIENT_QSR_LOADOUT.s_chatColor,                     sizeof(CLIENT_QSR_LOADOUT.s_chatColor), s_chatColor);
 
@@ -354,7 +353,7 @@ void SQLCB_PopulatePlayerSounds(Database db, DBResultSet results, const char[] e
         int i_loadout, i_slot;
         while (results.FetchRow())
         {
-            
+
             i_loadout = results.FetchInt(0);
             i_slot = results.FetchInt(1);
             results.FetchString(2, s_itemID, sizeof(s_itemID));
@@ -363,7 +362,7 @@ void SQLCB_PopulatePlayerSounds(Database db, DBResultSet results, const char[] e
 
             strcopy(CLIENT_SOUND.s_itemID, sizeof(CLIENT_SOUND.s_itemID), s_itemID);
             CLIENT_SOUND.Get();
-            
+
             #undef CLIENT_SOUND
         }
 
@@ -419,7 +418,7 @@ void SQLCB_PopulateTFLoadout(Database db, DBResultSet results, const char[] erro
                     TF_ITEM_LOADOUT.st_primary[i_class-1].i_paintkit = i_paintkitID;
                     TF_ITEM_LOADOUT.st_primary[i_class-1].i_warpaint = i_warpaintID;
                     TF_ITEM_LOADOUT.st_primary[i_class-1].i_unusual = i_unusualID;
-                    
+
                     strcopy(TF_ITEM_LOADOUT.st_primary[i_class-1].s_slot,
                      sizeof(TF_ITEM_LOADOUT.st_primary[i_class-1].s_slot), s_slot);
                 }
@@ -434,7 +433,7 @@ void SQLCB_PopulateTFLoadout(Database db, DBResultSet results, const char[] erro
                     TF_ITEM_LOADOUT.st_secondary[i_class-1].i_paintkit = i_paintkitID;
                     TF_ITEM_LOADOUT.st_secondary[i_class-1].i_warpaint = i_warpaintID;
                     TF_ITEM_LOADOUT.st_secondary[i_class-1].i_unusual = i_unusualID;
-                    
+
                     strcopy(TF_ITEM_LOADOUT.st_secondary[i_class-1].s_slot,
                      sizeof(TF_ITEM_LOADOUT.st_secondary[i_class-1].s_slot), s_slot);
                 }
@@ -449,7 +448,7 @@ void SQLCB_PopulateTFLoadout(Database db, DBResultSet results, const char[] erro
                     TF_ITEM_LOADOUT.st_melee[i_class-1].i_paintkit = i_paintkitID;
                     TF_ITEM_LOADOUT.st_melee[i_class-1].i_warpaint = i_warpaintID;
                     TF_ITEM_LOADOUT.st_melee[i_class-1].i_unusual = i_unusualID;
-                    
+
                     strcopy(TF_ITEM_LOADOUT.st_melee[i_class-1].s_slot,
                      sizeof(TF_ITEM_LOADOUT.st_melee[i_class-1].s_slot), s_slot);
                 }

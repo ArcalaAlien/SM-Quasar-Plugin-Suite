@@ -1,0 +1,72 @@
+"Phrases"
+{
+    "QSR_IgnoreStatusChangedUnignored"
+    {
+        "format" "{1:s},{2:s},{3:s},{4:s},{5:s},{6:t}"
+        "en" "{1}You {2}unignored {3}{4}'s {5}{6}"
+    }
+
+    "QSR_IgnoreStatusChangedIgnored"
+    {
+        "format" "{1:s},{2:s},{3:s},{4:s},{5:s},{6:t}"
+        "en" "{1}You {2}ignored {3}{4}'s {5}{6}"
+    }
+
+    "QSR_IgnorePage1Title"
+    {
+        "en" "Ignore Menu"
+    }
+
+    "QSR_IgnoreClientListTitle"
+    {
+        "format" "{1:t}"
+        "en" "Ignore who's {1}?"
+    }
+
+    "QSR_IgnoreOptionChat"
+    {
+        "en" "Ignore/Unignore Someone's Chat"
+    }
+
+    "QSR_IgnoreOptionVoice"
+    {
+        "en" "Ignore/Unignore Someone's Voice"
+    }
+
+    "QSR_IgnoreOptionChatAll"
+    {
+        "format" "{1:t}"
+        "en" "{1} All Chat"
+    }
+
+    "QSR_IgnoreOptionVoiceAll"
+    {
+        "format" "{1:t}"
+        "en" "{1} All Voice"
+    }
+
+    "QSR_IgnoreOptionViewIgnored"
+    {
+        "en" "View Ignored Players"
+    }
+
+    "QSR_IgnoreIgnore"
+    {
+        "en" "Ignore"
+    }
+
+    "QSR_IgnoreUnignore"
+    {
+        "en" "Unignore"
+    }
+
+    "QSR_IgnoreVoice"
+    {
+        "en" "Voice"
+    }
+
+    "QSR_IgnoreChat"
+    {
+        "en" "Chat"
+    }
+}
