@@ -48,25 +48,72 @@ public void OnPluginStart()
 {
     AutoExecConfig_SetFile("plugins.quasar_ignore");
 
-    gH_CVR_allowIgnoreAdmin = AutoExecConfig_CreateConVar("sm_quasar_ignore_allow_ignore_admins", "0", "Allows users to ignore an admin's voice/text chat. Recommended to leave off.", 0, true, _, true, 1.0);
-    gH_CVR_allowIgnoreChat = AutoExecConfig_CreateConVar("sm_quasar_ignore_allow_ignore_chat", "1", "Allows users to ignore other user's text chat.", 0, true, _, true, 1.0);
-    gH_CVR_allowIgnoreVoice = AutoExecConfig_CreateConVar("sm_qusar_ignore_allow_ignore_voice", "1", "Allows users to ignore other user's voice chat.", 0, true, _, true, 1.0);
+    gH_CVR_allowIgnoreAdmin = AutoExecConfig_CreateConVar(
+        "sm_quasar_ignore_allow_ignore_admins",
+        "0",
+        "Allows users to ignore an admin's voice/text chat. Recommended to leave off.",
+        0, true, _, true, 1.0);
+
+    gH_CVR_allowIgnoreChat = AutoExecConfig_CreateConVar(
+        "sm_quasar_ignore_allow_ignore_chat",
+        "1", "Allows users to ignore other user's text chat.",
+        0, true, _, true, 1.0);
+
+    gH_CVR_allowIgnoreVoice = AutoExecConfig_CreateConVar(
+        "sm_qusar_ignore_allow_ignore_voice",
+        "1",
+        "Allows users to ignore other user's voice chat.", 0, true, _, true, 1.0);
 
     AutoExecConfig_ExecuteFile();
     AutoExecConfig_CleanFile();
 
+    RegConsoleCmd(
+        "sm_ignore",
+        USR_IgnoreUser,
+        "Use this to ignore a player's voice or text chat.");
 
-    RegConsoleCmd("sm_ignore", USR_IgnoreUser, "Use this to ignore a player's voice or text chat.");
-    RegConsoleCmd("sm_i", USR_IgnoreUser, "Alias for sm_ignore");
-    RegConsoleCmd("sm_ig", USR_IgnoreUser, "Alias for sm_ignore");
+    RegConsoleCmd(
+        "sm_i",
+        USR_IgnoreUser,
+        "Alias for sm_ignore");
 
-    RegConsoleCmd("sm_ignoreall", USR_IgnoreAll, "Use this to ignore all voice or text chat.");
-    RegConsoleCmd("sm_iga", USR_IgnoreAll, "Alias for sm_ignoreall");
-    RegConsoleCmd("sm_ia", USR_IgnoreAll, "Alias for sm_ignoreall");
+    RegConsoleCmd(
+        "sm_ig",
+        USR_IgnoreUser,
+        "Alias for sm_ignore");
 
-    RegAdminCmd("sm_forceignore", ADM_ForceIgnore, ADMFLAG_GENERIC, "Force a user to ignore another user's voice or text chat");
-    RegAdminCmd("sm_fig", ADM_ForceIgnore, ADMFLAG_GENERIC, "Alias for sm_forceignore");
-    RegAdminCmd("sm_fi", ADM_ForceIgnore, ADMFLAG_GENERIC, "Alias for sm_forceignore");
+    RegConsoleCmd(
+        "sm_ignoreall",
+        USR_IgnoreAll,
+        "Use this to ignore all voice or text chat.");
+
+    RegConsoleCmd(
+        "sm_iga",
+        USR_IgnoreAll,
+        "Alias for sm_ignoreall");
+
+    RegConsoleCmd(
+        "sm_ia",
+        USR_IgnoreAll,
+        "Alias for sm_ignoreall");
+
+    RegAdminCmd(
+        "sm_forceignore",
+        ADM_ForceIgnore,
+        ADMFLAG_GENERIC,
+        "Force a user to ignore another user's voice or text chat");
+
+    RegAdminCmd(
+        "sm_fig",
+        ADM_ForceIgnore,
+        ADMFLAG_GENERIC,
+        "Alias for sm_forceignore");
+
+    RegAdminCmd(
+        "sm_fi",
+        ADM_ForceIgnore,
+        ADMFLAG_GENERIC,
+        "Alias for sm_forceignore");
 
     LoadTranslations("core.phrases");
     LoadTranslations("common.phrases");
@@ -131,15 +178,60 @@ public void QSR_OnSystemFormattingRetrieved(StringMap formatting)
         IntToString(i, key, sizeof(key));
         switch(i)
         {
-            case 0: { formatting.GetString(key, gST_chatFormatStrings.s_prefix, sizeof(gST_chatFormatStrings.s_prefix)); }
-            case 1: { formatting.GetString(key, gST_chatFormatStrings.s_defaultColor, sizeof(gST_chatFormatStrings.s_defaultColor)); }
-            case 2: { formatting.GetString(key, gST_chatFormatStrings.s_successColor, sizeof(gST_chatFormatStrings.s_successColor)); }
-            case 3: { formatting.GetString(key, gST_chatFormatStrings.s_errorColor, sizeof(gST_chatFormatStrings.s_errorColor)); }
-            case 4: { formatting.GetString(key, gST_chatFormatStrings.s_warnColor, sizeof(gST_chatFormatStrings.s_warnColor)); }
-            case 5: { formatting.GetString(key, gST_chatFormatStrings.s_actionColor, sizeof(gST_chatFormatStrings.s_actionColor)); }
-            case 6: { formatting.GetString(key, gST_chatFormatStrings.s_infoColor, sizeof(gST_chatFormatStrings.s_infoColor)); }
-            case 7: { formatting.GetString(key, gST_chatFormatStrings.s_commandColor, sizeof(gST_chatFormatStrings.s_commandColor)); }
-            case 8: { formatting.GetString(key, gST_chatFormatStrings.s_creditColor, sizeof(gST_chatFormatStrings.s_creditColor)); }
+            case 0: {
+                formatting.GetString(
+                    key,
+                    gST_chatFormatStrings.s_prefix,
+                    sizeof(gST_chatFormatStrings.s_prefix));
+            }
+            case 1: {
+                formatting.GetString(
+                    key,
+                    gST_chatFormatStrings.s_defaultColor,
+                    sizeof(gST_chatFormatStrings.s_defaultColor));
+            }
+            case 2: {
+                formatting.GetString(
+                    key,
+                    gST_chatFormatStrings.s_successColor,
+                    sizeof(gST_chatFormatStrings.s_successColor));
+            }
+            case 3: {
+                formatting.GetString(
+                    key,
+                    gST_chatFormatStrings.s_errorColor,
+                    sizeof(gST_chatFormatStrings.s_errorColor));
+            }
+            case 4: {
+                formatting.GetString(
+                    key,
+                    gST_chatFormatStrings.s_warnColor,
+                    sizeof(gST_chatFormatStrings.s_warnColor));
+            }
+            case 5: {
+                formatting.GetString(
+                    key,
+                    gST_chatFormatStrings.s_actionColor,
+                    sizeof(gST_chatFormatStrings.s_actionColor));
+            }
+            case 6: {
+                formatting.GetString(
+                    key,
+                    gST_chatFormatStrings.s_infoColor,
+                    sizeof(gST_chatFormatStrings.s_infoColor));
+            }
+            case 7: {
+                formatting.GetString(
+                    key,
+                    gST_chatFormatStrings.s_commandColor,
+                    sizeof(gST_chatFormatStrings.s_commandColor));
+            }
+            case 8: {
+                formatting.GetString(
+                    key,
+                    gST_chatFormatStrings.s_creditColor,
+                    sizeof(gST_chatFormatStrings.s_creditColor));
+            }
         }
     }
 }
@@ -160,7 +252,10 @@ public Action CP_OnChatMessageSendPre(int sender, int reciever, char[] buffer, i
     }
 
 
-    if (Internal_ClientHasIgnored(GetClientUserId(reciever), GetClientUserId(sender), IgnoreType_Chat))
+    if (Internal_ClientHasIgnored(
+            GetClientUserId(reciever),
+            GetClientUserId(sender),
+            IgnoreType_Chat))
         return Plugin_Stop;
 }
 
@@ -181,25 +276,65 @@ public void QSR_IgnoreBuildPage1(int userid)
     p_ignoreMenuPage1.SetTitle("%t", "QSR_IgnorePage1Title");
 
     char s_display[128];
-    FormatEx(s_display, sizeof(s_display), "%t", "QSR_IgnoreOptionChat");
+    FormatEx(
+        s_display,
+        sizeof(s_display),
+        "%T",
+        client,
+        "QSR_IgnoreOptionChat");
     p_ignoreMenuPage1.AddItem("c", s_display);
 
-    FormatEx(s_display, sizeof(s_display), "%t", "QSR_IgnoreOptionVoice");
+    FormatEx(
+        s_display,
+        sizeof(s_display),
+        "%T",
+        client,
+        "QSR_IgnoreOptionVoice");
     p_ignoreMenuPage1.AddItem("v", s_display);
 
     if (gB_ignoreAllChat[client])
-        FormatEx(s_display, sizeof(s_display), "%t", "QSR_IgnoreOptionChatAll", "QSR_Unignore");
+        FormatEx(
+            s_display,
+            sizeof(s_display),
+            "%T",
+            client,
+            "QSR_IgnoreOptionChatAll",
+            "QSR_Unignore");
     else
-        FormatEx(s_display, sizeof(s_display), "%t", "QSR_IgnoreOptionChatAll", "QSR_Ignore");
+        FormatEx(
+            s_display,
+            sizeof(s_display),
+            "%T",
+            client,
+            "QSR_IgnoreOptionChatAll",
+            "QSR_Ignore");
     p_ignoreMenuPage1.AddItem("C", s_display);
 
     if (gB_ignoreAllVoice[client])
-        FormatEx(s_display, sizeof(s_display), "%t", "QSR_IgnoreOptionVoiceAll", "QSR_Unignore");
+        FormatEx(
+            s_display,
+            sizeof(s_display),
+            "%T",
+            client,
+            "QSR_IgnoreOptionVoiceAll",
+            "QSR_Unignore");
     else
-        FormatEx(s_display, sizeof(s_display), "%t", "QSR_IgnoreOptionVoiceAll", "QSR_Ignore");
+        FormatEx(
+            s_display,
+            sizeof(s_display),
+            "%T",
+            client,
+            "QSR_IgnoreOptionVoiceAll",
+            "QSR_Ignore");
     p_ignoreMenuPage1.AddItem("V", s_display);
 
-    FormatEx(s_display, sizeof(s_display), "%t", "QSR_IgnoreOptionViewIgnored");
+    FormatEx(
+        s_display,
+        sizeof(s_display),
+        "%T",
+        client,
+        "QSR_IgnoreOptionViewIgnored"
+    );
     p_ignoreMenuPage1.AddItem("I", s_display);
     p_ignoreMenuPage1.Display(client, 20);
 }
@@ -215,13 +350,27 @@ public void QSR_IgnoreBuildClientList(int userId, Quasar_IgnoreType ignoreType)
 
     if (ignoreType == IgnoreType_Voice)
     {
-        p_ignoreMenuClientList.SetTitle("%t", "QSR_IgnoreClientListTitle", "QSR_IgnoreVoice");
-        p_ignoreMenuClientList.AddItem("__V","X",ITEMDRAW_IGNORE);
+        p_ignoreMenuClientList.SetTitle(
+            "%t",
+            "QSR_IgnoreClientListTitle",
+            "QSR_IgnoreVoice");
+
+        p_ignoreMenuClientList.AddItem(
+            "__V",
+            "X",
+            ITEMDRAW_IGNORE);
     }
     else
     {
-        p_ignoreMenuClientList.SetTitle("%t", "QSR_IgnoreClientListTitle", "QSR_IgnoreChat");
-        p_ignoreMenuClientList.AddItem("__C","X",ITEMDRAW_IGNORE);
+        p_ignoreMenuClientList.SetTitle(
+            "%t",
+            "QSR_IgnoreClientListTitle",
+            "QSR_IgnoreChat");
+
+        p_ignoreMenuClientList.AddItem(
+            "__C",
+            "X",
+            ITEMDRAW_IGNORE);
     }
 
     for (int i=1; i<MaxClients; i++)
@@ -232,7 +381,10 @@ public void QSR_IgnoreBuildClientList(int userId, Quasar_IgnoreType ignoreType)
         IntToString(i, s_info, sizeof(s_info));
         GetClientName(i, s_display, sizeof(s_display));
 
-        if (Internal_ClientHasIgnored(userId, GetClientUserId(i), ignoreType))
+        if (Internal_ClientHasIgnored(
+                userId,
+                GetClientUserId(i),
+                ignoreType))
         {
             FormatEx(s_ignoreStatus, sizeof(s_ignoreStatus),
                         " [%T]", client, "QSR_IgnoreUnignore");
