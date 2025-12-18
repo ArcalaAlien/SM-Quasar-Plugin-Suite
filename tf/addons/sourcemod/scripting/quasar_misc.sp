@@ -334,7 +334,7 @@ public void OnConfigsExecuted()
             gH_CVR_respawnTimeMaximum.IntValue != mp_respawnwavetime.IntValue)
         {
             if (mp_respawnwavetime <= 0.0) { gH_CVR_respawnTimeMaximum.SetInt(5); }
-            else                           { gH_CVR_respawnTimeMaximum.SetInt(mp_respawnwavetime.IntValue) }
+            else                           { gH_CVR_respawnTimeMaximum.SetInt(mp_respawnwavetime.IntValue); }
             mp_respawnwavetime.Close();
         }
 

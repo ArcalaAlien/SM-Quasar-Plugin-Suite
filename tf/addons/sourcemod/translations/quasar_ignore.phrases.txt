@@ -12,6 +12,18 @@
         "en" "{1}You {2}ignored {3}{4}'s {5}{6}"
     }
 
+    "QSR_IgnoreIgnoreSelf"
+    {
+        "#format" "{1:s}"
+        "en" "{1}You cannot ignore yourself!"
+    }
+
+    "QSR_IgnoreIgnoreAdmin"
+    {
+        "#format" "{1:S}"
+        "en" "{1}You cannot ignore admins!"
+    }
+
     "QSR_IgnorePage1Title"
     {
         "en" "Ignore Menu"

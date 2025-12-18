@@ -3,7 +3,8 @@
 #endif
 #define _quasar_afk_included
 
-#include <quasar/structs/afk>
+#undef  MODULE_NAME
+#define MODULE_NAME "AFK"
 
 public SharedPlugin __pl_quasarafk =
 {

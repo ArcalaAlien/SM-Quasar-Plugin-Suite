@@ -34,6 +34,7 @@ enum Quasar_IgnoreType
 
 enum Quasar_IgnoreResult
 {
+    IgnoreResult_UnknownError,
     IgnoreResult_TargetedAdmin,
     IgnoreResult_InvalidTarget,
     IgnoreResult_InvalidClient,

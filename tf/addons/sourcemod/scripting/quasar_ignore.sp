@@ -60,6 +60,10 @@ public void OnPluginStart()
     RegConsoleCmd("sm_i", USR_IgnoreUser, "Alias for sm_ignore");
     RegConsoleCmd("sm_ig", USR_IgnoreUser, "Alias for sm_ignore");
 
+    RegConsoleCmd("sm_ignoreall", USR_IgnoreAll, "Use this to ignore all voice or text chat.");
+    RegConsoleCmd("sm_iga", USR_IgnoreAll, "Alias for sm_ignoreall");
+    RegConsoleCmd("sm_ia", USR_IgnoreAll, "Alias for sm_ignoreall");
+
     RegAdminCmd("sm_forceignore", ADM_ForceIgnore, ADMFLAG_GENERIC, "Force a user to ignore another user's voice or text chat");
     RegAdminCmd("sm_fig", ADM_ForceIgnore, ADMFLAG_GENERIC, "Alias for sm_forceignore");
     RegAdminCmd("sm_fi", ADM_ForceIgnore, ADMFLAG_GENERIC, "Alias for sm_forceignore");
@@ -73,7 +77,12 @@ public void OnPluginStart()
 public void OnClientPostAdminCheck(int client)
 {
     for (int i = 1; i < MaxClients; i++)
+    {
         gI_ignoreArray[client][i] = IGNORE_FLAGS_NONE;
+
+        if (QSR_IsValidClient(i))
+            Internal_UpdateIgnoreFromSQL(GetClientUserId(i), GetClientUserId(client));
+    }
 }
 
 public void OnClientCookiesCached(int client)
@@ -137,13 +146,27 @@ public void QSR_OnSystemFormattingRetrieved(StringMap formatting)
 
 public Action CP_OnChatMessageSendPre(int sender, int reciever, char[] buffer, int maxlength)
 {
+    // Is there a better way to do this?
+    // Probably.
+    if (gB_ignoreAllChat[reciever])
+    {
+        if (GetUserAdmin(sender) != INVALID_ADMIN_ID)
+        {
+            if (gH_CVR_allowIgnoreAdmin.BoolValue)
+                return Plugin_Stop;
+        }
+        else
+            return Plugin_Stop;
+    }
+
+
     if (Internal_ClientHasIgnored(GetClientUserId(reciever), GetClientUserId(sender), IgnoreType_Chat))
         return Plugin_Stop;
 }
 
 Quasar_IgnoreType QSR_StringToIgnoreType(const char[] string)
 {
-    if (strcmp(string, "c", false) == 0 ||
+    if (strcmp(string, "v", false) == 0 ||
         strcmp(string, "vc", false) == 0 ||
         StrContains(string, "voice", false))
         return IgnoreType_Voice;
@@ -193,12 +216,12 @@ public void QSR_IgnoreBuildClientList(int userId, Quasar_IgnoreType ignoreType)
     if (ignoreType == IgnoreType_Voice)
     {
         p_ignoreMenuClientList.SetTitle("%t", "QSR_IgnoreClientListTitle", "QSR_IgnoreVoice");
-        p_ignoreMenuClientList.AddItem("V","X",ITEMDRAW_IGNORE);
+        p_ignoreMenuClientList.AddItem("__V","X",ITEMDRAW_IGNORE);
     }
     else
     {
         p_ignoreMenuClientList.SetTitle("%t", "QSR_IgnoreClientListTitle", "QSR_IgnoreChat");
-        p_ignoreMenuClientList.AddItem("C","X",ITEMDRAW_IGNORE);
+        p_ignoreMenuClientList.AddItem("__C","X",ITEMDRAW_IGNORE);
     }
 
     for (int i=1; i<MaxClients; i++)
@@ -213,13 +236,13 @@ public void QSR_IgnoreBuildClientList(int userId, Quasar_IgnoreType ignoreType)
         {
             FormatEx(s_ignoreStatus, sizeof(s_ignoreStatus),
                         " [%T]", client, "QSR_IgnoreUnignore");
-            StrCat(s_info, sizeof(s_info), "U");
+            StrCat(s_info, sizeof(s_info), "__U");
         }
         else
         {
             FormatEx(s_ignoreStatus, sizeof(s_ignoreStatus),
                         " [%T]", client, "QSR_IgnoreIgnore");
-            StrCat(s_info, sizeof(s_info), "I");
+            StrCat(s_info, sizeof(s_info), "__I");
         }
         StrCat(s_display, sizeof(s_display), s_ignoreStatus);
 
@@ -227,14 +250,62 @@ public void QSR_IgnoreBuildClientList(int userId, Quasar_IgnoreType ignoreType)
     }
 }
 
+void QSR_IgnoreBuildIgnoredMenu(int userId)
+{
+
+}
+
 public int MenuHandler_IgnorePage1(Menu menu, MenuAction action, int param1, int param2)
 {
+    switch (action)
+    {
+        case MenuAction_Select:
+        {
+            int userId = GetClientUserId(param1);
+            char choice[4];
+            menu.GetItem(param2, choice, sizeof(choice));
+
+            switch (choice[0])
+            {
+                case 'c':
+                    QSR_IgnoreBuildClientList(userId, IgnoreType_Chat);
+
+                case 'v':
+                    QSR_IgnoreBuildClientList(userId, IgnoreType_Chat);
+
+                case 'C':
+                {
+                    Internal_ToggleIgnoreAllPlayers(userId, IgnoreType_Chat);
+                    QSR_IgnoreBuildPage1(userId);
+                }
+
+                case 'V':
+                {
+                    Internal_ToggleIgnoreAllPlayers(userId, IgnoreType_Chat);
+                    QSR_IgnoreBuildPage1(userId);
+                }
+
+                case 'I':
+                    QSR_IgnoreBuildIgnoredMenu(userId);
+            }
+        }
+
+        case MenuAction_Cancel:
+        {
+
+        }
+
+        case MenuAction_End:
+        {
+            delete menu;
+        }
+    }
     return 0;
 }
 
 public int MenuHandler_IgnoreClientList(Menu menu, MenuAction action, int param1, int param2)
 {
-
+    return 0;
 }
 
 public any Native_QSRIgnoreTargetPlayer(Handle plugin, int numParams)
@@ -254,7 +325,7 @@ Quasar_IgnoreResult Internal_SetClientIgnore(int userId, int targetUserId, Quasa
 
     if (!QSR_IsValidClient(client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Attempt made to set ignore flags for invalid client %d!", client);
+        QSR_ThrowError(gH_logFile, MODULE_NAME, "Attempt made to set ignore flags for invalid client %d!", client);
         return IgnoreResult_InvalidClient;
     }
 
@@ -263,17 +334,17 @@ Quasar_IgnoreResult Internal_SetClientIgnore(int userId, int targetUserId, Quasa
 
     if (!QSR_IsValidClient(target))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Client %d (%s) attempted to ignore invalid target client %d!", client, s_clientAuth, target);
+        QSR_ThrowError(gH_logFile, MODULE_NAME, "Client %d (%s) attempted to ignore invalid target client %d!", client, s_clientAuth, target);
         return IgnoreResult_InvalidTarget;
     }
 
     if (GetUserAdmin(target) != INVALID_ADMIN_ID && !gH_CVR_allowIgnoreAdmin.BoolValue)
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Client %d (%s) attempted to ignore an admin!", client, s_clientAuth);
+        QSR_ThrowError(gH_logFile, MODULE_NAME, "Client %d (%s) attempted to ignore an admin!", client, s_clientAuth);
         return IgnoreResult_TargetedAdmin;
     }
 
-    char s_targetAuth[64];
+    char s_targetAuth[64], s_query[512];
     Quasar_IgnoreResult e_result = IgnoreResult_Unignored;
     GetClientAuthId(target, AuthId_Steam3, s_targetAuth, sizeof(s_targetAuth));
 
@@ -313,39 +384,125 @@ Quasar_IgnoreResult Internal_SetClientIgnore(int userId, int targetUserId, Quasa
         }
     }
 
+    FormatEx(s_query, sizeof(s_query), "INSERT INTO `srv_%s_playersignore`\
+                                        VALUES ('%s', '%s', '%d') ON DUPLICATE KEY UPDATE",
+                                        gS_subdomain, s_clientAuth, s_targetAuth, gI_ignoreArray[client][target]);
+    QSR_LogQuery(gH_logFile, gH_db, s_query, SQLCB_DefaultCallback);
+
     return e_result;
 }
 
-public bool Internal_ClientHasIgnored(int userId, int targetUserId, Quasar_IgnoreType ignoreType)
+bool Internal_ClientHasIgnored(int userId, int targetUserId, Quasar_IgnoreType ignoreType)
 {
     int client = GetClientOfUserId(userId),
         target = GetClientOfUserId(targetUserId);
 
     if (ignoreType == IgnoreType_Voice)
-    {
         if ((gI_ignoreArray[client][target] & IGNORE_FLAGS_VOICE) == 0)
             return true;
-
-        return false;
-    }
-
-    if ((gI_ignoreArray[client][target] & IGNORE_FLAGS_CHAT) == 0)
-        return true;
+    else
+        if ((gI_ignoreArray[client][target] & IGNORE_FLAGS_CHAT) == 0)
+            return true;
 
     return false;
+}
+
+Quasar_IgnoreResult Internal_ToggleIgnoreAllPlayers(int userId, Quasar_IgnoreType ignoreType)
+{
+    int client = GetClientOfUserId(userId);
+    Quasar_IgnoreResult e_result = IgnoreResult_UnknownError;
+
+    if (ignoreType == IgnoreType_Chat)
+    {
+        gB_ignoreAllChat[client] = !gB_ignoreAllChat[client];
+        if (gB_ignoreAllChat[client])
+            e_result = IgnoreResult_Ignored;
+        else
+            e_result = IgnoreResult_Unignored;
+    }
+    else
+    {
+        gB_ignoreAllVoice[client] = !gB_ignoreAllVoice[client];
+
+        for (int i=1; i<MaxClients; i++)
+        {
+            if (!QSR_IsValidClient(i) || i == client)
+                continue;
+
+            if (gB_ignoreAllVoice[client])
+            {
+                Internal_SetClientIgnore(userId, GetClientUserId(i),
+                                        IgnoreType_Voice, true);
+                e_result = IgnoreResult_Ignored;
+            }
+            else
+            {
+                Internal_SetClientIgnore(userId, GetClientUserId(i),
+                                        IgnoreType_Voice, false);
+                e_result = IgnoreResult_Unignored;
+            }
+        }
+    }
+
+    return e_result;
+}
+
+void Internal_UpdateIgnoreFromSQL(int userId, int targetUserId)
+{
+    int i_client = GetClientOfUserId(userId),
+        i_target = GetClientOfUserId(targetUserId);
+    char s_clientAuth[64], s_targetAuth[64], s_query[512];
+
+    if (!QSR_IsValidClient(i_client) ||
+        !QSR_IsValidClient(i_target))
+        return;
+
+    //TODO: Handle AuthID return vals
+    GetClientAuthId(i_client, AuthId_SteamID64, s_clientAuth, sizeof(s_clientAuth));
+    GetClientAuthId(i_target, AuthId_SteamID64, s_targetAuth, sizeof(s_targetAuth));
+
+    FormatEx(s_query, sizeof(s_query), "\
+    SELECT ignore_flags \
+    FROM srv_%s_playersignore \
+    WHERE steam_id='%s' \
+    AND target_steam_id='%s'",
+    gS_subdomain, s_clientAuth, s_targetAuth);
+
+    DataPack h_playerPack = new DataPack();
+    h_playerPack.Reset();
+    h_playerPack.WriteCell(i_client);
+    h_playerPack.WriteCell(i_target);
+    QSR_LogQuery(gH_logFile, gH_db, s_query, SQLCB_FetchIgnoreStatus, h_playerPack);
+}
+
+public void SQLCB_DefaultCallback(Database db, DBResultSet results, const char[] error, any data)
+{
+    if (error[0])
+        QSR_ThrowError(gH_logFile, MODULE_NAME, error);
+}
+
+public void SQLCB_FetchIgnoreStatus(Database db, DBResultSet results, const char[] error, DataPack playerPack)
+{
+    if (error[0])
+    {
+        QSR_ThrowError(gH_logFile, MODULE_NAME, error);
+        return;
+    }
+
+
 }
 
 public Action USR_IgnoreUser(int client, int args)
 {
     if (client == 0)
     {
-        QSR_PrintToChat(0, "The server is not allowed to ignore user voice or text chat!");
+        QSR_ThrowError(gH_logFile, MODULE_NAME, "The server is not allowed to ignore user voice or text chat!");
         return Plugin_Handled;
     }
 
     if (!QSR_IsValidClient(client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Invalid client %d attempted to ignore a user!", client);
+        QSR_ThrowError(gH_logFile, MODULE_NAME, "Invalid client %d attempted to ignore a user!", client);
         return Plugin_Handled;
     }
 
@@ -417,8 +574,22 @@ public Action USR_IgnoreUser(int client, int args)
                 return Plugin_Handled;
             }
 
-            i_targetUserId = GetClientUserId(i_targetClient[0]);
+            if (GetUserAdmin(i_targetClient[0]) != INVALID_ADMIN_ID &&
+                !gH_CVR_allowIgnoreAdmin.BoolValue)
+            {
+                QSR_PrintToChat(i_userId, "%t", "QSR_IgnoreIgnoreAdmin",
+                                                gST_chatFormatStrings.s_errorColor);
+                return Plugin_Handled;
+            }
 
+            if (i_targetClient[0] == client)
+            {
+                QSR_PrintToChat(i_userId, "%t", "QSR_IgnoreIgnoreSelf",
+                                                gST_chatFormatStrings.s_errorColor);
+                return Plugin_Handled;
+            }
+
+            i_targetUserId = GetClientUserId(i_targetClient[0]);
             if (ignoreType == IgnoreType_Voice)
             {
                 if (Internal_ClientHasIgnored(i_userId, i_targetUserId, IgnoreType_Voice))
