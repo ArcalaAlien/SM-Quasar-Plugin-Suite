@@ -50,7 +50,7 @@ public void OnPluginStart()
     // Register ConVars
     AutoExecConfig_SetFile("plugin.quasar_scoreboard");
 
-    gH_CVR_useAFKSystem     = AutoExecConfig_CreateConVar("sm_quasar_scoreboard_use_afk",               "1",    "Use the quasar AFK system");
+    gH_CVR_useAFKSystem     = AutoExecConfig_CreateConVar("sm_quasar_scoreboard_use_qafk",              "1",    "Use the quasar AFK system");
     gH_CVR_pointsOnKill     = AutoExecConfig_CreateConVar("sm_quasar_scoreboard_points_on_kill",        "15.0", "The amount of points to award to a player when they kill someone.");
     gH_CVR_pointsOnAssist   = AutoExecConfig_CreateConVar("sm_quasar_scoreboard_points_on_assist",      "7.5",  "The amount of points to award to a player when they help kill someone.");
     gH_CVR_pointsOnDeath    = AutoExecConfig_CreateConVar("sm_quasar_scoreboard_points_on_death",       "-1.0", "The amount of points to award (or remove) from a player when they die.");
@@ -348,11 +348,6 @@ int Handler_StatMenuHandler(Menu menu, MenuAction action, int param1, int param2
     }
 
     return 0;
-}
-
-Action CMD_ModPoints(int client, int args)
-{
-    return Plugin_Handled;
 }
 
 Action CMD_StatsMenu(int client, int args)

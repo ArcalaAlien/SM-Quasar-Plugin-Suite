@@ -38,7 +38,7 @@ public Plugin myinfo =
 {
     name = "[QSR] Quasar Plugin Suite (Player Handler)",
     author = PLUGIN_AUTHOR,
-    description = "Keeps all of the player info in one place, accessable by native functions in a method map.",
+    description = "Keeps all of the player info in one place",
     version = PLUGIN_VERSION,
     url = PLUGIN_URL
 };
