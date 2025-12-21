@@ -182,9 +182,9 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 -- Table `quasar`.`srv_playersignore`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `quasar`.`srv_playersignore` ;
+DROP TABLE IF EXISTS `quasar`.`qsr_playersignore` ;
 
-CREATE TABLE IF NOT EXISTS `quasar`.`srv_playersignore` (
+CREATE TABLE IF NOT EXISTS `quasar`.`qsr_playersignore` (
   `steam_id` VARCHAR(64) NOT NULL DEFAULT 0,
   `target_steam_id` VARCHAR(64) NOT NULL DEFAULT 0,
   `ignore_flags` INT NULL DEFAULT 0,

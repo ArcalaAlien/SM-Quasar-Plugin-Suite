@@ -47,7 +47,6 @@ CREATE TABLE IF NOT EXISTS `quasar`.`str_playersgroups` (
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
 -- Table `quasar`.`str_chatcolors`
 -- -----------------------------------------------------

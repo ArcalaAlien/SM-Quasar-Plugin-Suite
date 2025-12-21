@@ -11,7 +11,10 @@
 #define PLUGIN_VERSION  "0.1.0"
 #define PLUGIN_URL      "https://github.com/ArcalaAlien/SourceMod-QuasarPluginSuite"
 
-#define MODULE_NAME     "Core"
+#define MODULE_NAME         "Core"
+#define DATABASE_VERSION    "QSRDB_V0.1.0"
+
+#define SERVER 0
 
 #include <quasar/structs/color>
 #include <regex>
@@ -177,6 +180,26 @@ native bool QSR_NotifyUser(int userid, const char[] sound, const char[] message,
  *  @param subdomainLen length of the subdomain.
  */
 forward void QSR_OnDatabaseConnected(Database& db, char[] subdomain, int subdomainLen);
+
+/**
+ *  Fires once the database version is retrieved.
+ *  @param dbVersion    The database version retrieved
+ *  @param len          Length of the version string
+ */
+forward void QSR_OnDBVersionRetrieved(char[] dbVersion, int len);
+
+/**
+ *  Fires once we check if the chat log table exists
+ *  for the subserver. This table will always be created,
+ *  so it's a nice anchor to check if a subserver has tables.
+ *
+ *  In the future, I'll check for individual modules and
+ *  add / remove tables as needed.
+ *
+ *  @param makeSubserverTables      Do we have to make tables
+ *                                  for the subserver?
+ */
+forward void QSR_OnSubserverTablesValidated(bool makeSubserverTables);
 
 
 /**
