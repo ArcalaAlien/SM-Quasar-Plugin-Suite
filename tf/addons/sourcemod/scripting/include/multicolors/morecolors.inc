@@ -30,10 +30,10 @@ static ConVar sm_show_activity;
 /**
  * Prints a message to a specific client in the chat area.
  * Supports color tags.
- * 
+ *
  * @param client		Client index.
  * @param message		Message (formatting rules).
- * 
+ *
  * On error/Errors:		If the client is not connected an error will be thrown.
  */
 stock void MC_PrintToChat(int client, const char[] message, any ...) {
@@ -61,7 +61,7 @@ stock void MC_PrintToChat(int client, const char[] message, any ...) {
 /**
  * Prints a message to all clients in the chat area.
  * Supports color tags.
- * 
+ *
  * @param client		Client index.
  * @param message		Message (formatting rules).
  */
@@ -88,11 +88,11 @@ stock void MC_PrintToChatAll(const char[] message, any ...) {
 /**
  * Prints a message to a specific client in the chat area.
  * Supports color tags and teamcolor tag.
- * 
+ *
  * @param client		Client index.
  * @param author		Author index whose color will be used for teamcolor tag.
  * @param message		Message (formatting rules).
- * 
+ *
  * On error/Errors:		If the client or author are not connected an error will be thrown
  */
 stock void MC_PrintToChatEx(int client, int author, const char[] message, any ...) {
@@ -128,7 +128,7 @@ stock void MC_PrintToChatEx(int client, int author, const char[] message, any ..
  *
  * @param author	  Author index whose color will be used for teamcolor tag.
  * @param message   Message (formatting rules).
- * 
+ *
  * On error/Errors:   If the author is not connected an error will be thrown.
  */
 stock void MC_PrintToChatAllEx(int author, const char[] message, any ...) {
@@ -162,7 +162,7 @@ stock void MC_PrintToChatAllEx(int author, const char[] message, any ...) {
 
 /**
  * Sends a SayText2 usermessage
- * 
+ *
  * @param client	Client to send usermessage to
  * @param message	Message to send
  */
@@ -218,20 +218,20 @@ stock void MC_SendMessage(int client, const char[] message, int author = 0) {
  * MC_PrintToChatAll or MC_PrintToChatAllEx. It causes those functions
  * to skip the specified client when printing the message.
  * After printing the message, the client will no longer be skipped.
- * 
+ *
  * @param client   Client index
  */
 stock void MC_SkipNextClient(int client) {
 	if (client <= 0 || client > MaxClients) {
 		ThrowError("Invalid client index %i", client);
 	}
-	
+
 	MC_SkipList[client] = true;
 }
 
 /**
  * Checks if the colors trie is initialized and initializes it if it's not (used internally)
- * 
+ *
  * @return			No return
  */
 stock void MC_CheckTrie() {
@@ -247,7 +247,7 @@ stock void MC_CheckTrie() {
  * @param author		Optional client index to use for {teamcolor} tags, or 0 for none
  * @param removeTags	Optional boolean value to determine whether we're replacing tags with colors, or just removing tags, used by MC_RemoveTags
  * @param maxlen		Optional value for max buffer length, used by MC_RemoveTags
- * 
+ *
  * On error/Errors:		If the client index passed for author is invalid or not in game.
  */
 stock void MC_ReplaceColorCodes(char[] buffer, int author = 0, bool removeTags = false, int maxlen = MAX_BUFFER_LENGTH) {
@@ -274,7 +274,7 @@ stock void MC_ReplaceColorCodes(char[] buffer, int author = 0, bool removeTags =
 
 	int cursor = 0;
 	int value;
-	char tag[32], buff[32]; 
+	char tag[32], buff[32];
 	char[] output = new char[maxlen];
 
 	strcopy(output, maxlen, buffer);
@@ -330,7 +330,7 @@ stock void MC_ReplaceColorCodes(char[] buffer, int author = 0, bool removeTags =
 
 /**
  * Gets a part of a string
- * 
+ *
  * @param input			String to get the part from
  * @param output		Buffer to write to
  * @param maxlen		Max length of output buffer
@@ -352,7 +352,7 @@ stock void CSubString(const char[] input, char[] output, int maxlen, int start, 
 
 /**
  * Converts a string to lowercase
- * 
+ *
  * @param buffer		String to convert
  */
 stock void MC_StrToLower(char[] buffer) {
@@ -388,7 +388,7 @@ stock bool MC_AddColor(const char[] name, int color) {
 
 /**
  * Removes color tags from a message
- * 
+ *
  * @param message		Message to remove tags from
  * @param maxlen		Maximum buffer length
  */
@@ -398,7 +398,7 @@ stock void MC_RemoveTags(char[] message, int maxlen) {
 
 /**
  * Replies to a command with colors
- * 
+ *
  * @param client		Client to reply to
  * @param message		Message (formatting rules)
  */
@@ -422,7 +422,7 @@ stock void MC_ReplyToCommand(int client, const char[] message, any ...) {
 
 /**
  * Replies to a command with colors
- * 
+ *
  * @param client		Client to reply to
  * @param author		Client to use for {teamcolor}
  * @param message		Message (formatting rules)
@@ -446,12 +446,12 @@ stock void MC_ReplyToCommandEx(int client, int author, const char[] message, any
 }
 
 /**
- * Displays usage of an admin command to users depending on the 
- * setting of the sm_show_activity cvar.  
+ * Displays usage of an admin command to users depending on the
+ * setting of the sm_show_activity cvar.
  *
- * This version does not display a message to the originating client 
- * if used from chat triggers or menus.  If manual replies are used 
- * for these cases, then this function will suffice.  Otherwise, 
+ * This version does not display a message to the originating client
+ * if used from chat triggers or menus.  If manual replies are used
+ * for these cases, then this function will suffice.  Otherwise,
  * MC_ShowActivity2() is slightly more useful.
  * Supports color tags.
  *
@@ -663,7 +663,7 @@ stock int MC_ShowActivityEx(int client, const char[] tag, const char[] format, a
 
 /**
  * Displays usage of an admin command to users depending on the setting of the sm_show_activity cvar.
- * All users receive a message in their chat text, except for the originating client, 
+ * All users receive a message in their chat text, except for the originating client,
  * who receives the message based on the current ReplySource.
  * Supports color tags.
  *
@@ -705,8 +705,8 @@ stock int MC_ShowActivity2(int client, const char[] tag, const char[] format, an
 		SetGlobalTransTarget(client);
 		VFormat(szBuffer, sizeof(szBuffer), format, 4);
 
-		/* We don't display directly to the console because the chat text 
-		 * simply gets added to the console, so we don't want it to print 
+		/* We don't display directly to the console because the chat text
+		 * simply gets added to the console, so we don't want it to print
 		 * twice.
 		 */
 		MC_PrintToChatEx(client, client, "%s%s", szTag, szBuffer);
@@ -752,7 +752,7 @@ stock int MC_ShowActivity2(int client, const char[] tag, const char[] format, an
 			bool is_root = id.HasFlag(Admin_Root, Access_Effective);
 			if ((value & 4) || (value & 8) || ((value & 16) && is_root)) {
 				char newsign[MAX_NAME_LENGTH];
-				
+
 
 				if ((value & 8) || ((value & 16) && is_root)) {
 					newsign = name;
@@ -773,7 +773,7 @@ stock int MC_ShowActivity2(int client, const char[] tag, const char[] format, an
 
 /**
  * Determines whether a color name exists
- * 
+ *
  * @param color			The color name to check
  * @return				True if the color exists, false otherwise
  */
@@ -998,25 +998,25 @@ stock StringMap MC_InitColorTrie() {
 	SetTrieValue(hTrie, "rwhite", 0xF2F3EE);
 	SetTrieValue(hTrie, "rgrey", 0xA1A5A2);
 	SetTrieValue(hTrie, "rgray", 0xA1A5A2);
-	SetTrieValue(hTrie, "rlightyellow", 0xF9E999);
-	SetTrieValue(hTrie, "rbrickyellow", 0xD7C59A);
-	SetTrieValue(hTrie, "rlightgreenmint", 0xC2DAB8);
-	SetTrieValue(hTrie, "rlightredviolet", 0xE8BAC8);
-	SetTrieValue(hTrie, "rpastelblue", 0x80BBDB);
-	SetTrieValue(hTrie, "rlightorangebrown", 0xCB8442);
+	SetTrieValue(hTrie, "rlyellow", 0xF9E999);
+	SetTrieValue(hTrie, "rbyellow", 0xD7C59A);
+	SetTrieValue(hTrie, "rlgreenmint", 0xC2DAB8);
+	SetTrieValue(hTrie, "rlredviolet", 0xE8BAC8);
+	SetTrieValue(hTrie, "rpblue", 0x80BBDB);
+	SetTrieValue(hTrie, "rlorangebrown", 0xCB8442);
 	SetTrieValue(hTrie, "rnougat", 0xCC8E69);
-	SetTrieValue(hTrie, "rbrightred", 0xC4281C);
-	SetTrieValue(hTrie, "rmedredviolet", 0xC470A0);
-	SetTrieValue(hTrie, "rbrightblue", 0x0C69AC);
-	SetTrieValue(hTrie, "rbrightyellow", 0xF5CD30);
+	SetTrieValue(hTrie, "rbred", 0xC4281C);
+	SetTrieValue(hTrie, "rmredviolet", 0xC470A0);
+	SetTrieValue(hTrie, "rbblue", 0x0C69AC);
+	SetTrieValue(hTrie, "ryellow", 0xF5CD30);
 	SetTrieValue(hTrie, "rearthorange", 0x624732);
 	SetTrieValue(hTrie, "rblack", 0x1B2A35);
 	SetTrieValue(hTrie, "rdarkgrey", 0x6D6E6C);
-	SetTrieValue(hTrie, "rdarkgrey", 0x6D6E6C);
+	SetTrieValue(hTrie, "rdarkgray", 0x6D6E6C);
 	SetTrieValue(hTrie, "rdarkgreen", 0x287F47);
-	SetTrieValue(hTrie, "rmedgreen", 0xA1C48C);
-	SetTrieValue(hTrie, "rlightyellowishorange", 0xF3CF9B);
-	SetTrieValue(hTrie, "rbrightgreen", 0x4B974B);
+	SetTrieValue(hTrie, "rmgreen", 0xA1C48C);
+	SetTrieValue(hTrie, "rlyishorange", 0xF3CF9B);
+	SetTrieValue(hTrie, "rbgreen", 0x4B974B);
 	SetTrieValue(hTrie, "rdarkorange", 0xA05F35);
 	SetTrieValue(hTrie, "rlightbluishviolet", 0xC1CADE);
 	SetTrieValue(hTrie, "rtrred", 0xCD544B);
@@ -1027,27 +1027,27 @@ stock StringMap MC_InitColorTrie() {
 	SetTrieValue(hTrie, "rtrgreen", 0x84B68D);
 	SetTrieValue(hTrie, "rposphwhite", 0xECE8DE);
 	SetTrieValue(hTrie, "rlightred", 0xEEC4B6);
-	SetTrieValue(hTrie, "rmediumred", 0xDA867A);
-	SetTrieValue(hTrie, "rmediumblue", 0x6E99CA);
+	SetTrieValue(hTrie, "rmred", 0xDA867A);
+	SetTrieValue(hTrie, "rmblue", 0x6E99CA);
 	SetTrieValue(hTrie, "rlightgrey", 0xC7C1B7);
-	SetTrieValue(hTrie, "rbrightviolet", 0x6B327C);
-	SetTrieValue(hTrie, "rbrightyellowishorange", 0xE29B40);
-	SetTrieValue(hTrie, "rbrightorange", 0xDA8541);
-	SetTrieValue(hTrie, "rbrightbluishgreen", 0x008F9C);
+	SetTrieValue(hTrie, "rbviolet", 0x6B327C);
+	SetTrieValue(hTrie, "rbyorange", 0xE29B40);
+	SetTrieValue(hTrie, "rborange", 0xDA8541);
+	SetTrieValue(hTrie, "rbbgreen", 0x008F9C);
 	SetTrieValue(hTrie, "rearthyellow", 0x685C43);
-	SetTrieValue(hTrie, "rbrightbluishviolet", 0x435494);
-	SetTrieValue(hTrie, "rmediumbluishviolet", 0x6874AC);
-	SetTrieValue(hTrie, "rtrmedireddishviolet", 0xE5ADC8);
-	SetTrieValue(hTrie, "rmedyellowishgreen", 0xC7D23C);
-	SetTrieValue(hTrie, "rmedbluishgreen", 0x55A5AF);
-	SetTrieValue(hTrie, "rlightbluishgreen", 0xB7D7D5);
-	SetTrieValue(hTrie, "rbrightyellowishgreen", 0xA4BD47);
-	SetTrieValue(hTrie, "rlightyellowishgreen", 0xD9E4A7);
-	SetTrieValue(hTrie, "rmedyellowishorange", 0xE7AC58);
-	SetTrieValue(hTrie, "rbrightreddishorange", 0xD36F4C);
-	SetTrieValue(hTrie, "rbrightreddishviolet", 0x923978);
+	SetTrieValue(hTrie, "rbbviolet", 0x435494);
+	SetTrieValue(hTrie, "rmbviolet", 0x6874AC);
+	SetTrieValue(hTrie, "rtrmrviolet", 0xE5ADC8);
+	SetTrieValue(hTrie, "rmygreen", 0xC7D23C);
+	SetTrieValue(hTrie, "rmbgreen", 0x55A5AF);
+	SetTrieValue(hTrie, "rlbgreen", 0xB7D7D5);
+	SetTrieValue(hTrie, "rbygreen", 0xA4BD47);
+	SetTrieValue(hTrie, "rlygreen", 0xD9E4A7);
+	SetTrieValue(hTrie, "rmyorange", 0xE7AC58);
+	SetTrieValue(hTrie, "rbrorange", 0xD36F4C);
+	SetTrieValue(hTrie, "rbviolet", 0x923978);
 	SetTrieValue(hTrie, "rlightorange", 0xEAB892);
-	SetTrieValue(hTrie, "rtrbrightbluishviolet", 0xA5A5CB);
+	SetTrieValue(hTrie, "rtrbbviolet", 0xA5A5CB);
 	SetTrieValue(hTrie, "rgold", 0xDCBC81);
 	SetTrieValue(hTrie, "rdarknougat", 0xAE7A59);
 	SetTrieValue(hTrie, "rsilver", 0x9CA3A8);
@@ -1064,13 +1064,13 @@ stock StringMap MC_InitColorTrie() {
 	SetTrieValue(hTrie, "rcurry", 0xD7A94B);
 	SetTrieValue(hTrie, "rfireyellow", 0xF9D62E);
 	SetTrieValue(hTrie, "rreddishbrown", 0x694028);
-	SetTrieValue(hTrie, "rflameyellowishorange", 0xE8AB2D);
-	SetTrieValue(hTrie, "rflamereddishorange", 0xCF6024);
+	SetTrieValue(hTrie, "rfyorange", 0xE8AB2D);
+	SetTrieValue(hTrie, "rfrorange", 0xCF6024);
 	SetTrieValue(hTrie, "rmediumstonegrey", 0xA3A2A5);
 	SetTrieValue(hTrie, "rmediumstonegray", 0xA3A2A5);
 	SetTrieValue(hTrie, "rroyalblue", 0x4667A4);
 	SetTrieValue(hTrie, "rdarkroyalblue", 0x23478B);
-	SetTrieValue(hTrie, "rbrightreddishlilac", 0x8E4285);
+	SetTrieValue(hTrie, "rbrlilac", 0x8E4285);
 	SetTrieValue(hTrie, "rdarkstonegrey", 0x635F62);
 	SetTrieValue(hTrie, "rdarkstonegray", 0x635F62);
 	SetTrieValue(hTrie, "rlightstonegrey", 0xE5E4DF);

@@ -1,17 +1,28 @@
-//TODO: MOVE BELOW CODE TO quasar_check_db_version.sp
-enum QSRDBVersionStatus {
-    DBVer_Equal,
-    DBVer_NeedsUpdated,
-    DBVer_FirstTime
-};
+
 
 public void QSR_OnDBVersionRetrieved(char[] dbVersion, int len)
 {
-    switch (QSR_IsDatabaseUpToDate()) {
-        case DBVer_FirstTime:
-            QSR_GenerateSQLTables();
-        case DBVer_NeedsUpdated:
-            QSR_UpdateSQLTables();
+    switch (Internal_IsDatabaseUpToDate()) {
+        case DBVer_FirstTime: {
+            Internal_GenerateTFTables();
+            Internal_GenerateGlobalTables();
+            Internal_GenerateSubserverTables();
+            Internal_GenerateGlobalJunctionTables();
+            Internal_GenerateSubserverJunctionTables();
+            Internal_GenerateTableViews();
+            Internal_GenerateSQLTriggers();
+            Internal_FillTableDefaults();
+
+        }
+        case DBVer_NeedsUpdated: {
+            //Internal_UpdateTFTables();
+            //Internal_UpdateGlobalTables();
+            //Internal_UpdateSubserverTables();
+            //Internal_UpdateJunctionTables();
+            //Internal_GenerateTableViews();
+            //Internal_GenerateSQLTriggers();
+            //Internal_FillTableDefaults();
+        }
         default:
             return;
     }
@@ -31,7 +42,7 @@ void QSR_StartCheckDatabaseVersion() {
         SQLCB_DatabaseVersionCB);
 }
 
-QSRDBVersionStatus QSR_IsDatabaseUpToDate() {
+QSRDBVersionStatus Internal_IsDatabaseUpToDate() {
     if (StrEqual(gS_dbVersion, "NULL VERSION"))
         return DBVer_FirstTime;
 
@@ -79,4 +90,3 @@ void SQLCB_DatabaseVersionCB(Database db, DBResultSet results, const char[] erro
     Call_PushCell(strlen(gS_dbVersion));
     Call_Finish();
 }
-// TODO: MOVE ABOVE CODE TO quasar_check_db_version.sp
