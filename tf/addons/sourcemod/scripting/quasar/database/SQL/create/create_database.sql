@@ -1,0 +1,2 @@
+DROP DATABASE IF EXISTS `quasar`;
+CREATE DATABASE `quasar`;

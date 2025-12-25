@@ -12,7 +12,6 @@
 #define PLUGIN_URL      "https://github.com/ArcalaAlien/SourceMod-QuasarPluginSuite"
 
 #define MODULE_NAME         "Core"
-#define DATABASE_VERSION    "QSRDB_V0.1.0"
 
 #define SERVER 0
 
@@ -105,12 +104,6 @@ enum struct QSRGeneralSounds
 /*         */
 
 
-
-/**
- *  Manually refresh the Quasar database.
-*/
-native void QSR_RefreshDatabase();
-
 /**
  *  Automatically appends the quasar prefix to a message to send to a valid client
  *
@@ -173,36 +166,6 @@ native bool QSR_NotifyUser(int userid, const char[] sound, const char[] message,
 /*          */
 
 /**
- *  Fires once the core plugin has connected to the Quasar database.
- *
- *  @param db           A reference to the Database handle in the core plugin.
- *  @param subdomain    The subdomain used during the creation of the tables, EX. tf2.mywebsite.com's subdomain would be "tf2"
- *  @param subdomainLen length of the subdomain.
- */
-forward void QSR_OnDatabaseConnected(Database& db, char[] subdomain, int subdomainLen);
-
-/**
- *  Fires once the database version is retrieved.
- *  @param dbVersion    The database version retrieved
- *  @param len          Length of the version string
- */
-forward void QSR_OnDBVersionRetrieved(char[] dbVersion, int len);
-
-/**
- *  Fires once we check if the chat log table exists
- *  for the subserver. This table will always be created,
- *  so it's a nice anchor to check if a subserver has tables.
- *
- *  In the future, I'll check for individual modules and
- *  add / remove tables as needed.
- *
- *  @param makeSubserverTables      Do we have to make tables
- *                                  for the subserver?
- */
-forward void QSR_OnSubserverTablesValidated(bool makeSubserverTables);
-
-
-/**
  *  Fires once the core plugin has made the log file.
  *
  *  @param file     A reference to the File handle in the core plugin.
@@ -253,26 +216,6 @@ stock int QSR_IsValidClientEX(int client)
     if (client && IsClientInGame(client) && !IsFakeClient(client) && IsPlayerAlive(GetClientUserId(client))) { return GetClientUserId(client); }
 
     return 0;
-}
-
-
-/**
- *  Sends a query to the database and logs it in the logfile.
- *
- *  @param log      Log file to save to.
- *  @param db       Database to send query to.
- *  @param query    The query to send.
- *  @param callback The SQLQueryCallback to use for the query.
- *  @param data     Any data you need to pass into the query.
- */
-stock void QSR_LogQuery(File log, Database db, const char[] query, SQLQueryCallback callback, any data=0)
-{
-    char line[512], s_time[24];
-    FormatTime(s_time, sizeof(s_time), "%D %T");
-    FormatEx(line, sizeof(line), "[QSR (%s) %s] Query Sent: %s", MODULE_NAME, s_time, query);
-    if (log != null) { log.WriteLine(line); }
-
-    db.Query(callback, query, data);
 }
 
 /**

@@ -3,6 +3,9 @@
 #endif
 #define _quasar_players_included
 
+#undef   MODULE_NAME
+#define  MODULE_NAME "Player"
+
 #include <quasar/structs/player>
 
 public SharedPlugin __pl_quasarplayers =
