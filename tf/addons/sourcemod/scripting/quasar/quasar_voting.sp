@@ -12,7 +12,7 @@ ConVar gH_CVR_useAFKSystem = null;
 
 public Plugin myinfo =
 {
-    name = "[QSR] Quasar Plugin Suite (Vote Handler)",
+    name = "[QUASAR] Quasar Plugin Suite (Vote Handler)",
     author = PLUGIN_AUTHOR,
     description = "Description",
     version = PLUGIN_VERSION,

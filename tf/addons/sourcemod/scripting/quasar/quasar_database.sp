@@ -6,21 +6,18 @@
 #include <autoexecconfig>
 
 // Core Variables
-Database gH_db = null;
-File     gH_logFile = null;
+static Database gH_db = null;
 bool     gB_late = false;
 static Transaction gH_DBTransaction = null;
-
-// Store stuff
-int gI_fetchTrailsAttempts = 0;
-int gI_fetchSoundsAttempts = 0;
 
 // Database
 static char gS_subserver[64];
 static char gS_dbProfile[64]; // The database profile name in databases.cfg
 static bool gB_dbConnected = false; // Are we connected to the database yet?
+static bool gB_logTransactions = false; // Do we log all queries in a transaction?
 static char gS_dbVersion[24]; // The version number of our database.
 static bool gB_isTableUpdated[view_as<int>(NUM_DBTABLES)];
+static QSRDBSetupStep gE_currentStep = WAITING_FOR_SETUP;
 
 // Replace SUBSERVER with gS_subserver if you
 // use these table names!!!!
@@ -65,6 +62,7 @@ static char gS_tableNames[NUM_DBTABLES][] = {
 // ConVars
 ConVar gH_CVR_subserver = null;
 ConVar gH_CVR_dbConfig = null;
+ConVar gH_CVR_dbLogTrans = null;
 
 // Forwards
 Handle gH_FWD_dbConnected = null; // Called when we've successfully connected to the database.
@@ -72,7 +70,7 @@ Handle gH_FWD_dbVersionRetrieved = null;
 
 public Plugin myinfo =
 {
-    name = "[QSR] Quasar Plugin Suite (Database Handler)",
+    name = "[QUASAR] Quasar Plugin Suite (Database Handler)",
     author = PLUGIN_AUTHOR,
     description = "CRUD Controller for the quasar database.",
     version = PLUGIN_VERSION,
@@ -90,13 +88,19 @@ public void OnPluginStart()
     AutoExecConfig_SetFile("plugins.quasar_database");
 
     gH_CVR_dbConfig             = AutoExecConfig_CreateConVar("sm_quasar_db_profile",           "quasar",           "The default database configuration to use for Quasar", FCVAR_PROTECTED);
-    gH_CVR_subserver            = AutoExecConfig_CreateConVar("sm_quasar_subserver",            "",                 "Controls what server subserver the system is running on. [koth1].server.tf The boxed area is a subserver. Used to get and set player statistics across different servers.", FCVAR_NONE);
+    gH_CVR_subserver            = AutoExecConfig_CreateConVar("sm_quasar_subserver",            "srv0",             "Controls what server subserver the system is running on. [koth1].server.tf The boxed area is a subserver. Used to get and set player statistics across different servers.", FCVAR_NONE);
+    gH_CVR_dbLogTrans           = AutoExecConfig_CreateConVar("sm_quasar_log_transactions",     "0",                "Controls whether we wi ll log all queries in a transaction.", FCVAR_NONE, true, 0.0, true, 1.0);
+    
     AutoExecConfig_ExecuteFile();
     AutoExecConfig_CleanFile();
 
-    gH_FWD_dbConnected = CreateGlobalForward("QSR_OnDatabaseConnected", ET_Ignore, Param_CellByRef, Param_Array, Param_Cell);
+    gH_FWD_dbConnected = CreateGlobalForward("QSR_OnDatabaseConnected", ET_Ignore, Param_CellByRef, Param_String);
+    gH_FWD_dbVersionRetrieved = CreateGlobalForward("QSR_OnDBVersionRetrieved", ET_Ignore, Param_String);
+
+    HookConVarChange(gH_CVR_dbLogTrans, OnConVarChanged);
 
     RegAdminCmd("sm_qdb_refresh", CMD_DB_Refresh, ADMFLAG_UNBAN, "Refresh the connection to the Quasar Database.");
+    RegAdminCmd("sm_qdb_drop_tables", CMD_DB_DropAllTables, ADMFLAG_ROOT, "Drops all tables in the Quasar Database without saving data!");
 }
 
 public void OnPluginEnd()
@@ -111,8 +115,9 @@ public void OnPluginEnd()
 public void OnConfigsExecuted()
 {
     gH_CVR_dbConfig.GetString(gS_dbProfile, sizeof(gS_dbProfile));
-
-   Database.Connect(SQLCB_OnConnect);
+    gH_CVR_subserver.GetString(gS_subserver, sizeof(gS_subserver));
+    gB_logTransactions = gH_CVR_dbLogTrans.BoolValue;
+    Database.Connect(SQLCB_OnConnect, gS_dbProfile);
 }
 
 public void OnMapStart() {
@@ -123,18 +128,45 @@ public void OnMapEnd() {
 
 }
 
-public void QSR_OnLogFileMade(File& file)
+void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-    gH_logFile = file;
+    if (convar == gH_CVR_dbLogTrans)
+        gB_logTransactions = convar.BoolValue;
 }
 
-public void QSR_OnDBVersionRetrieved(char[] dbVersion, int len)
+public void QSR_OnDBVersionRetrieved(const char[] dbVersion)
 {
+    if (gH_DBTransaction != null)
+        gH_DBTransaction.Close();
+
+    char s_directory[256];
     switch (Internal_IsDatabaseUpToDate()) {
-        case DBVer_FirstTime:
-            Internal_DirectoryToTransaction(SQL_CREATE_DIR);
-        case DBVer_NeedsUpdated:
-            Internal_DirectoryToTransaction(SQL_ALTER_DIR);
+        case DBVer_FirstTime: {
+            BuildPath(
+                Path_SM,
+                s_directory,
+                sizeof(s_directory),
+                SQL_SETUP_DIR);
+            for (gE_currentStep = DBStep_CreateVersionTable; 
+                 gE_currentStep < NUM_SETUP_STEPS; 
+                 gE_currentStep++) {
+                    gH_DBTransaction = new Transaction();
+                    Internal_DirectoryToTransaction(s_directory);
+                    Internal_SendTableTrans(
+                        SQLTxn_OnTablesCreated, 
+                        SQLTxn_FailedToCreateTables,
+                        _,
+                        DBPrio_High);
+                }
+            }
+        case DBVer_NeedsUpdated: {
+            BuildPath(
+                Path_SM,
+                s_directory,
+                sizeof(s_directory),
+                SQL_ALTER_DIR);
+            Internal_DirectoryToTransaction(s_directory);
+        }
         default:
             return;
     }
@@ -148,7 +180,6 @@ void QSR_StartCheckDatabaseVersion() {
          FROM `quasar`.`db_version`;");
 
     QSR_LogQuery(
-        gH_logFile,
         gH_db,
         s_query,
         SQLCB_DatabaseVersionCB);
@@ -164,20 +195,31 @@ QSRDBVersionStatus Internal_IsDatabaseUpToDate() {
     return DBVer_Equal;
 }
 
-void Internal_DirectoryToTransaction(const char[] directory) {
-    gH_DBTransaction = new Transaction();
-    char s_smFilePath[256];
-    BuildPath(
-        Path_SM,
-        s_smFilePath,
-        sizeof(s_smFilePath),
-        directory);
+void Internal_DropTables() {
+    char s_query[512];
+    for (int i = view_as<int>(NUM_DBTABLES); i > -1; i--) {
+        FormatEx(
+            s_query,
+            sizeof(s_query),
+            "DROP TABLE IF EXISTS `quasar`.`%s`",
+            gS_tableNames[i]);
+        gH_DBTransaction.AddQuery(s_query, i);
+    }
 
+    Internal_SendTableTrans(
+        SQLTxn_OnTablesErased,
+        SQLTxn_FailedToEraseTables,
+        _, 
+        DBPrio_High);
+}
+
+void Internal_DirectoryToTransaction(const char[] directory) {
+    char s_tempPath[256];
+    char s_finalPath[256];
     DirectoryListing h_dir = OpenDirectory(directory);
     FileType h_currentFileType = FileType_Unknown;
     if (h_dir == null) {
         QSR_LogMessage(
-            gH_logFile,
             MODULE_NAME,
             "ERROR! COULD NOT OPEN DIRECTORY %s",
             directory);
@@ -186,64 +228,126 @@ void Internal_DirectoryToTransaction(const char[] directory) {
 
     while(
         h_dir.GetNext(
-            s_smFilePath,
-            sizeof(s_smFilePath),
+            s_tempPath,
+            sizeof(s_tempPath),
             h_currentFileType)) {
+        char c_currentStep[3];
+
+        if (gE_currentStep < view_as<QSRDBSetupStep>(10))
+            FormatEx(
+                c_currentStep,
+                sizeof(c_currentStep),
+                "0%d",
+                view_as<int>(gE_currentStep));
+        else
+            IntToString(
+                view_as<int>(gE_currentStep),
+                c_currentStep,
+                sizeof(c_currentStep));
+
+        if (StrEqual(s_tempPath, ".") || 
+            StrEqual(s_tempPath, "..") ||
+            StrEqual(s_tempPath, "disabled", false))
+            continue;
+
+        FormatEx(
+            s_finalPath,
+            sizeof(s_finalPath),
+            "%s/%s",
+            directory,
+            s_tempPath);
+
+        if (StrContains(s_finalPath, c_currentStep) == -1)
+            continue;
+        
         switch (h_currentFileType) {
             case FileType_Directory:
-                Internal_DirectoryToTransaction(s_smFilePath);
+                Internal_DirectoryToTransaction(s_finalPath);
             case FileType_File:
-                Internal_AddCreateTableToTrans(s_smFilePath);
+                Internal_AddSQLFileToTrans(s_finalPath);
             default:
                 continue;
         }
-    }
+    } // End of while loop 2
+    h_dir.Close();
 }
 
-void Internal_AddCreateTableToTrans(const char[] sqlFile) {
-    File h_sqlFile = OpenFile(sqlFile, "r");
-
-    // This shouldn't happen, but just in case.
-    if (h_sqlFile == null) {
+void Internal_AddSQLFileToTrans(const char[] sqlFile) {
+    if (gH_DBTransaction == null) {
         QSR_LogMessage(
-            gH_logFile,
+            MODULE_NAME,
+            "ERROR! DB TRANSACTION DOESN'T EXIST");
+        return;
+    }
+    File h_sqlFile = OpenFile(sqlFile, "r");
+    // This shouldn't happen, but just in case.
+    if (h_sqlFile == null || StrContains(sqlFile, ".sql") == -1) {
+        QSR_LogMessage(
             MODULE_NAME,
             "ERROR! Attempting to open a null sql file: %s",
-            sqlFile
-        );
+            sqlFile);
+        return;
+    }
+    else if (StrContains(sqlFile, ".sql") == -1) {
+        QSR_LogMessage(
+            MODULE_NAME,
+            "ERROR! Attempting to open a non-sql file: %s",
+            sqlFile);
+        h_sqlFile.Close();
         return;
     }
 
-    char s_totalQuery[2048];
-    char s_currentLine[256];
+    char s_totalQuery[3256];
+    char s_currentLine[1024];
     QSRDBTable e_currentTable;
     while (h_sqlFile.ReadLine(s_currentLine, sizeof(s_currentLine))) {
-        if (StrContains(s_currentLine, "--?")) {
-            ReplaceString(
-                s_currentLine,
-                sizeof(s_currentLine),
-                "--?",
-                "");
-            e_currentTable = view_as<QSRDBTable>(StringToInt(s_currentLine));
+        if (StrContains(s_currentLine, "-- ?") != -1) {
+            ReplaceString(s_currentLine,
+                          sizeof(s_currentLine),
+                          "-- ?",
+                          "");
+            e_currentTable = view_as<QSRDBTable>(StringToInt(s_currentLine[4]));
             continue;
         }
 
-        StrCat(
+        ReplaceString(
+            s_currentLine,
+            sizeof(s_currentLine),
+            "PLREPLACE",
+            gS_subserver);
+
+        FormatEx(
             s_totalQuery,
             sizeof(s_totalQuery),
+            "%s%s",
+            s_totalQuery,
             s_currentLine);
     }
+
+    if (gB_logTransactions) {
+        QSR_SilentLog(
+            MODULE_NAME,
+            "Table %d (%s):\n\n%s\n",
+            view_as<int>(e_currentTable),
+            gS_tableNames[view_as<int>(e_currentTable)],
+            s_totalQuery);
+    }
+    
     gH_DBTransaction.AddQuery(s_totalQuery, e_currentTable);
+    h_sqlFile.Close();
 }
 
-void Internal_SendCreateTableTrans() {
+void Internal_SendTableTrans( SQLTxnSuccess success = INVALID_FUNCTION, 
+                                    SQLTxnFailure fail = INVALID_FUNCTION,
+                                    any data = 0,
+                                    DBPriority dbPriority = DBPrio_Normal) {
     gH_db.Execute(
         gH_DBTransaction,
-        SQLTxn_OnTablesCreated,
-        SQLTxn_FailedToCreateTables,
-        .priority=DBPrio_High
-    );
-    gH_DBTransaction.Close();
+        success,
+        fail,
+        data,
+        dbPriority);
+    gH_DBTransaction = null;
 }
 
 /**
@@ -271,40 +375,7 @@ void RefreshDatabaseConfig()
     gH_CVR_dbConfig.GetString(gS_dbProfile, sizeof(gS_dbProfile));
 }
 
-void Timer_RetryPrecacheTrails(Handle timer)
-{
-    if (gI_fetchTrailsAttempts == 5)
-    {
-        QSR_LogMessage(gH_logFile,  MODULE_NAME, "Unable to precache store sounds after 5 attempts!");
-        gI_fetchTrailsAttempts = 0;
-        return;
-    }
-
-    char s_query[512];
-    FormatEx(s_query, sizeof(s_query),
-    "SELECT vtf, vmt \
-    FROM str_trails");
-    QSR_LogQuery(gH_logFile, gH_db, s_query, SQLCB_PrecacheTrails);
-}
-
-void Timer_RetryPrecacheSounds(Handle timer)
-{
-    if (gI_fetchSoundsAttempts == 5)
-    {
-        QSR_LogMessage(gH_logFile,  MODULE_NAME, "Unable to precache store sounds after 5 attempts!");
-        gI_fetchSoundsAttempts = 0;
-        timer.Close();
-        return;
-    }
-
-    char s_query[512];
-    FormatEx(s_query, sizeof(s_query),
-    "SELECT filepath \
-    FROM str_sounds");
-    QSR_LogQuery(gH_logFile, gH_db, s_query, SQLCB_PrecacheSounds);
-}
-
-
+// NATIVES
 void Native_QSRRefreshDatabase(Handle plugin, int numParams)
 {
     CMD_DB_Refresh(0, 0);
@@ -321,16 +392,17 @@ void SQLCB_OnConnect(Database db, const char[] error, any data)
             gH_db = null;
         }
         LogError(error);
+        gB_dbConnected = false;
         return;
     }
 
     // Make sure we actually SET the database handle. :eyeroll:
     gH_db = db;
+    gB_dbConnected = true;
 
     Call_StartForward(gH_FWD_dbConnected);
     Call_PushCellRef(gH_db);
-    Call_PushString(gS_subserver);
-    Call_PushCell(sizeof(gS_subserver));
+    Call_PushStringEx(gS_subserver, sizeof(gS_subserver), 0, SM_PARAM_STRING_COPY);
     Call_Finish();
 
     QSR_StartCheckDatabaseVersion();
@@ -339,129 +411,141 @@ void SQLCB_OnConnect(Database db, const char[] error, any data)
 void SQLCB_DatabaseVersionCB(Database db, DBResultSet results, const char[] error, any data)
 {
     if (error[0]) {
-        QSR_LogMessage(
-            gH_logFile,
-            MODULE_NAME,
-            error);
-
         strcopy(
             gS_dbVersion,
             sizeof(gS_dbVersion),
             "NULL VERSION");
-
-        return;
-    }
-
-    char s_version[32];
-
-    DBResult res;
-    while (results.FetchRow()) {
-        results.FetchString(0, s_version, sizeof(s_version), res);
-        if (res != DBVal_Data)
-            strcopy(
-                gS_dbVersion,
-                sizeof(gS_dbVersion),
-                "NULL VERSION");
-        else
-            strcopy(
-                gS_dbVersion,
-                sizeof(gS_dbVersion),
-                s_version);
+    } else {
+        char s_version[32];
+        DBResult res;
+        while (results.FetchRow()) {
+            results.FetchString(0, s_version, sizeof(s_version), res);
+            if (res != DBVal_Data)
+                strcopy(
+                    gS_dbVersion,
+                    sizeof(gS_dbVersion),
+                    "NULL VERSION");
+            else
+                strcopy(
+                    gS_dbVersion,
+                    sizeof(gS_dbVersion),
+                    s_version);
+        }
     }
 
     Call_StartForward(gH_FWD_dbVersionRetrieved);
     Call_PushString(gS_dbVersion);
-    Call_PushCell(strlen(gS_dbVersion));
     Call_Finish();
 }
 
-void SQLCB_PrecacheTrails(Database db, DBResultSet results, const char[] error, any data)
+void SQLCB_TableQueryError(Database db, DBResultSet results, const char[] error, any data)
 {
-    if (error[0])
-    {
-        QSR_LogMessage(gH_logFile,  MODULE_NAME, "Unable to precache system trail textures! Retrying in 5s.\nERROR: %s", error);
-        gI_fetchTrailsAttempts++;
-        CreateTimer(5.0, Timer_RetryPrecacheTrails);
+    if (error[0]) {
+        QSR_LogMessage(
+            MODULE_NAME,
+            "\nTable %d: %s\nERROR: %s\n",
+            view_as<int>(data),
+            gS_tableNames[view_as<int>(data)],
+            error);
         return;
-    }
-
-    if (results.HasResults)
-    {
-        char s_vtf[256], s_vmt[256];
-        while (results.FetchRow())
-        {
-            results.FetchString(0, s_vtf, sizeof(s_vtf));
-            results.FetchString(1, s_vmt, sizeof(s_vmt));
-
-            AddFileToDownloadsTable(s_vtf);
-            PrecacheModel(s_vmt);
-        }
     }
 }
 
-void SQLCB_PrecacheSounds(Database db, DBResultSet results, const char[] error, any data)
+void SQLTxn_OnTablesErased(Database db, any data, int numQueries, Handle[] results, QSRDBTable[] queryData)
 {
-    if (error[0])
-    {
-        QSR_LogMessage(gH_logFile,  MODULE_NAME, "Unable to precache system sounds! Retrying in 5s.\nERROR: %s", error);
-        gI_fetchSoundsAttempts++;
-        CreateTimer(5.0, Timer_RetryPrecacheSounds);
-        return;
+    int tableNum;
+    for (int i=0; i < numQueries; i++) {
+        tableNum = view_as<int>(queryData[i]);
+        gB_isTableUpdated[tableNum] = true;
+        QSR_LogMessage(
+            MODULE_NAME,
+            "Table erased: %s",
+            gS_tableNames[tableNum]);
     }
+}
 
-    if (results.HasResults)
-    {
-        char s_soundfile[256];
-        while (results.FetchRow())
-        {
-            results.FetchString(0, s_soundfile, sizeof(s_soundfile));
-
-            AddFileToDownloadsTable(s_soundfile);
-            PrecacheSound(s_soundfile);
+void SQLTxn_FailedToEraseTables(Database db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
+{
+    int tableNum;
+    for (int i=0; i < numQueries; i++) {
+        tableNum = view_as<int>(queryData[i]);
+        if (i < failIndex) {
+            gB_isTableUpdated[tableNum] = true;
+            QSR_LogMessage(
+               MODULE_NAME,
+               "Table erased: %s",
+               gS_tableNames[tableNum]);
+            continue;
         }
-    }
+
+        gB_isTableUpdated[tableNum] = false;
+        QSR_LogMessage(
+           MODULE_NAME,
+           "Unable to erase table: %s",
+           gS_tableNames[tableNum]);
+    } 
+
+    QSR_LogMessage(
+        MODULE_NAME,
+        "UNABLE TO ERASE TABLES!");
+    QSR_LogMessage(
+        MODULE_NAME,
+        "ERROR AT QUERY %d/%d!\n%s",
+        failIndex,
+        numQueries,
+        error);
+    QSR_LogMessage(MODULE_NAME,"");
 }
 
 void SQLTxn_OnTablesCreated(Database db, any data, int numQueries, Handle[] results, QSRDBTable[] queryData)
 {
+    int tableNum;
     for (int i=0; i < numQueries; i++) {
-        gB_isTableUpdated[queryData[i]] = true;
+        tableNum = view_as<int>(queryData[i]);
+        gB_isTableUpdated[tableNum] = true;
         QSR_LogMessage(
-            gH_logFile,
             MODULE_NAME,
-            "Table Created: %s",
-            gS_tableNames[queryData[i]]);
+            "Table created: %s",
+            gS_tableNames[tableNum]);
     }
 }
 
 void SQLTxn_FailedToCreateTables(Database db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
 {
-    QSR_LogMessage(
-        gH_logFile,
-        MODULE_NAME,
-        "UNABLE TO GENERATE TABLES! ERROR AT QUERY %d/%d! %s",
-        failIndex,
-        numQueries,
-        error);
-
+    int tableNum;
     for (int i=0; i < numQueries; i++) {
+        tableNum = view_as<int>(queryData[i]);
         if (i < failIndex) {
-            gB_isTableUpdated[queryData[i]] = true;
+            gB_isTableUpdated[tableNum] = true;
             QSR_LogMessage(
-                gH_logFile,
-                MODULE_NAME,
-                "Table Created: %s",
-                gS_tableNames[queryData[i]]);
+               MODULE_NAME,
+               "Table created: %s",
+               gS_tableNames[tableNum]);
             continue;
         }
 
-        gB_isTableUpdated[queryData[i]] = false;
+        gB_isTableUpdated[tableNum] = false;
         QSR_LogMessage(
-            gH_logFile,
-            MODULE_NAME,
-            "Unable to create table %s",
-            gS_tableNames[queryData[i]]);
-    }
+           MODULE_NAME,
+           "Unable to create table: %s",
+           gS_tableNames[tableNum]);
+    } 
+
+    QSR_LogMessage(
+        MODULE_NAME,
+        "UNABLE TO GENERATE TABLES!");
+    QSR_LogMessage(
+        MODULE_NAME,
+        "ERROR AT QUERY %d/%d!\n%s",
+        failIndex+1,
+        numQueries,
+        error);
+    QSR_LogMessage(MODULE_NAME,"");
+}
+
+Action CMD_DB_DropAllTables(int client, int args) {
+    Internal_DropTables();
+    return Plugin_Handled;
 }
 
 Action CMD_DB_Refresh(int client, int args)

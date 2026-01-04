@@ -31,7 +31,7 @@ bool gB_ignoreAllVoice[MAXPLAYERS + 1];
 
 public Plugin myinfo =
 {
-    name = "[QSR] Quasar Plugin Suite (Ignore)",
+    name = "[QUASAR] Quasar Plugin Suite (Ignore)",
     author = PLUGIN_AUTHOR,
     description = "Allows players to ignore others text and voice chat.",
     version = PLUGIN_VERSION,
@@ -478,7 +478,7 @@ Quasar_IgnoreResult Internal_SetClientIgnore(int userId, int targetUserId, Quasa
 
     if (!QSR_IsValidClient(client))
     {
-        QSR_ThrowError(gH_logFile, MODULE_NAME, "Attempt made to set ignore flags for invalid client %d!", client);
+        QSR_ThrowError(MODULE_NAME, "Attempt made to set ignore flags for invalid client %d!", client);
         return IgnoreResult_InvalidClient;
     }
 
@@ -487,13 +487,13 @@ Quasar_IgnoreResult Internal_SetClientIgnore(int userId, int targetUserId, Quasa
 
     if (!QSR_IsValidClient(target))
     {
-        QSR_ThrowError(gH_logFile, MODULE_NAME, "Client %d (%s) attempted to ignore invalid target client %d!", client, s_clientAuth, target);
+        QSR_ThrowError(MODULE_NAME, "Client %d (%s) attempted to ignore invalid target client %d!", client, s_clientAuth, target);
         return IgnoreResult_InvalidTarget;
     }
 
     if (GetUserAdmin(target) != INVALID_ADMIN_ID && !gH_CVR_allowIgnoreAdmin.BoolValue)
     {
-        QSR_ThrowError(gH_logFile, MODULE_NAME, "Client %d (%s) attempted to ignore an admin!", client, s_clientAuth);
+        QSR_ThrowError(MODULE_NAME, "Client %d (%s) attempted to ignore an admin!", client, s_clientAuth);
         return IgnoreResult_TargetedAdmin;
     }
 
@@ -631,14 +631,14 @@ void Internal_UpdateIgnoreFromSQL(int userId, int targetUserId)
 public void SQLCB_DefaultCallback(Database db, DBResultSet results, const char[] error, any data)
 {
     if (error[0])
-        QSR_ThrowError(gH_logFile, MODULE_NAME, error);
+        QSR_ThrowError(MODULE_NAME, error);
 }
 
 public void SQLCB_FetchIgnoreStatus(Database db, DBResultSet results, const char[] error, DataPack playerPack)
 {
     if (error[0])
     {
-        QSR_ThrowError(gH_logFile, MODULE_NAME, error);
+        QSR_ThrowError(MODULE_NAME, error);
         return;
     }
 
@@ -649,13 +649,13 @@ public Action USR_IgnoreUser(int client, int args)
 {
     if (client == 0)
     {
-        QSR_ThrowError(gH_logFile, MODULE_NAME, "The server is not allowed to ignore user voice or text chat!");
+        QSR_ThrowError(MODULE_NAME, "The server is not allowed to ignore user voice or text chat!");
         return Plugin_Handled;
     }
 
     if (!QSR_IsValidClient(client))
     {
-        QSR_ThrowError(gH_logFile, MODULE_NAME, "Invalid client %d attempted to ignore a user!", client);
+        QSR_ThrowError(MODULE_NAME, "Invalid client %d attempted to ignore a user!", client);
         return Plugin_Handled;
     }
 

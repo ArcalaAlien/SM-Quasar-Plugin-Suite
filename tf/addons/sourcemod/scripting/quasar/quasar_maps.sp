@@ -13,7 +13,7 @@ bool gB_late      = false;
 
 public Plugin myinfo =
 {
-    name = "[QSR] Quasar Plugin Suite (Map Rating/Feedback Handler)",
+    name = "[QUASAR] Quasar Plugin Suite (Map Rating/Feedback Handler)",
     author = PLUGIN_AUTHOR,
     description = "Description",
     version = PLUGIN_VERSION,

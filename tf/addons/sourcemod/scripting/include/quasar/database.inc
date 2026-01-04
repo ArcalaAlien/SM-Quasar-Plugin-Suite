@@ -8,15 +8,27 @@
 
 #define DATABASE_VERSION    "QSRDB_V0.1.0"
 
-#define SQL_CREATE_DIR  "scripting/quasar/database/SQL/create/"
-#define SQL_ALTER_DIR   "scripting/quasar/database/SQL/alter/"
-#define SQL_INSERT_DIR  "scripting/quasar/database/SQL/insert/"
+#define SQL_SETUP_DIR  "scripting/quasar/database/SQL/setup"
+#define SQL_ALTER_DIR   "scripting/quasar/database/SQL/alter"
+#define SQL_INSERT_DIR  "scripting/quasar/database/SQL/insert"
 
+#define WAITING_FOR_SETUP view_as<QSRDBSetupStep>(-1)
 
 enum QSRDBVersionStatus {
     DBVer_Equal,
     DBVer_NeedsUpdated,
     DBVer_FirstTime
+};
+
+enum QSRDBSetupStep {
+    DBStep_CreateVersionTable = 1,
+    DBStep_CreateTFTables,
+    DBStep_CreateGlobalTables,
+    DBStep_CreateSubserverTables,
+    DBStep_CreateJunctionTables,
+    DBStep_CreateTFLoadoutTable,
+    DBStep_CreateViews,
+    NUM_SETUP_STEPS // END OF TABLE SETUP!
 };
 
 enum QSRDBTable {
@@ -83,7 +95,6 @@ public __pl_quasarplugin_SetNTVOptional()
 */
 native void QSR_RefreshDatabase();
 
-
 /**
  *  Fires once the core plugin has connected to the Quasar database.
  *
@@ -91,30 +102,32 @@ native void QSR_RefreshDatabase();
  *  @param subdomain    The subdomain used during the creation of the tables, EX. tf2.mywebsite.com's subdomain would be "tf2"
  *  @param subdomainLen length of the subdomain.
  */
-forward void QSR_OnDatabaseConnected(Database& db, char[] subdomain, int subdomainLen);
+forward void QSR_OnDatabaseConnected(Database& db, const char[] subdomain);
 
 /**
  *  Fires once the database version is retrieved.
  *  @param dbVersion    The database version retrieved
- *  @param len          Length of the version string
  */
-forward void QSR_OnDBVersionRetrieved(char[] dbVersion, int len);
+forward void QSR_OnDBVersionRetrieved(const char[] dbVersion);
 
 /**
  *  Sends a query to the database and logs it in the logfile.
  *
- *  @param log      Log file to save to.
- *  @param db       Database to send query to.
+ *  @param db       The database to send the query to
  *  @param query    The query to send.
  *  @param callback The SQLQueryCallback to use for the query.
  *  @param data     Any data you need to pass into the query.
+ *  @param priority Priority of the query
  */
-stock void QSR_LogQuery(File log, Database db, const char[] query, SQLQueryCallback callback, any data=0)
-{
-    char line[512], s_time[24];
-    FormatTime(s_time, sizeof(s_time), "%D %T");
-    FormatEx(line, sizeof(line), "[QSR (%s) %s] Query Sent: %s", MODULE_NAME, s_time, query);
-    if (log != null) { log.WriteLine(line); }
-
-    db.Query(callback, query, data);
+stock void QSR_LogQuery(Database db, 
+                        const char[] query, 
+                        SQLQueryCallback callback, 
+                        any data=0, 
+                        DBPriority priority=DBPrio_Normal) {
+    db.Query(callback, query, data, priority);
+    QSR_LogMessage(
+        MODULE_NAME,
+        "QUERY: %s",
+        query);
 }
+

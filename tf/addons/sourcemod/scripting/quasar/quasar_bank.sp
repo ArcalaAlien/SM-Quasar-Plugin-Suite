@@ -39,7 +39,7 @@ ConVar gH_CVR_maximumGive = null;
 
 public Plugin myinfo =
 {
-    name = "[QSR] Quasar Plugin Suite (Credit Handler)",
+    name = "[QUASAR] Quasar Plugin Suite (Credit Handler)",
     author = PLUGIN_AUTHOR,
     description = "Description",
     version = PLUGIN_VERSION,
@@ -357,7 +357,7 @@ any Native_QSRCreateCreditPickup(Handle plugin, int numParams)
         i_textEntIndex;
     if (!QSR_IsValidClient(i_client) || !QSR_IsPlayerFetched(i_userid) || !i_client)
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Attempted to create a credit drop for invalid client %d!", i_client);
+        QSR_LogMessage(MODULE_NAME, "Attempted to create a credit drop for invalid client %d!", i_client);
         return false;
     }
 
@@ -393,7 +393,7 @@ any Native_QSRCreateCreditPickup(Handle plugin, int numParams)
         TeleportEntity(i_modelEntIndex, f_pos);
         if (!DispatchSpawn(i_modelEntIndex))
         {
-            QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to dispatch model spawn for %d's credit drop!", i_client);
+            QSR_LogMessage(MODULE_NAME, "Unable to dispatch model spawn for %d's credit drop!", i_client);
             gST_pickup[i_client].Reset();
             QSR_NotifyUser(i_userid, gST_sounds.s_errorSound, "%t", "QSR_FailedToMakeCreditDrop", i_client, gST_chatFormatting.s_errorColor, "Failed to dispatch spawn for model");
             return false;
@@ -405,7 +405,7 @@ any Native_QSRCreateCreditPickup(Handle plugin, int numParams)
     else
     {
         gST_pickup[i_client].Reset();
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to create prop_dynamic for %d's credit drop!", i_client);
+        QSR_LogMessage(MODULE_NAME, "Unable to create prop_dynamic for %d's credit drop!", i_client);
         QSR_NotifyUser(i_userid, gST_sounds.s_errorSound, "%t", "QSR_FailedToMakeCreditDrop", i_client, gST_chatFormatting.s_errorColor, "Failed to create prop_dynamic");
         return false;
     }
@@ -430,7 +430,7 @@ any Native_QSRCreateCreditPickup(Handle plugin, int numParams)
         TeleportEntity(i_textEntIndex, f_pos);
         if (!DispatchSpawn(i_textEntIndex))
         {
-            QSR_LogMessage(gH_logFile, MODULE_NAME, "Failed to dispatch text spawn for %d's credit drop!", i_client);
+            QSR_LogMessage(MODULE_NAME, "Failed to dispatch text spawn for %d's credit drop!", i_client);
             gST_pickup[i_client].Reset();
             QSR_NotifyUser(i_userid, gST_sounds.s_errorSound, "%t", "QSR_FailedToMakeCreditDrop", i_client, gST_chatFormatting.s_errorColor, "Failed to dispatch spawn for text")
             return false;
@@ -443,7 +443,7 @@ any Native_QSRCreateCreditPickup(Handle plugin, int numParams)
     }
     else
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to create point_worldtext for %d's credit drop!", i_client);
+        QSR_LogMessage(MODULE_NAME, "Unable to create point_worldtext for %d's credit drop!", i_client);
         QSR_NotifyUser(i_userid, gST_sounds.s_errorSound, "%t", "QSR_FailedToMakeCreditDrop", i_client, gST_chatFormatting.s_errorColor, "Failed to create point_worldtext");
         gST_pickup[i_client].Reset();
         return false;
@@ -462,7 +462,7 @@ any Native_QSRCreateCreditPickup(Handle plugin, int numParams)
         TeleportEntity(i_triggerEntIndex, f_pos);
         if (!DispatchSpawn(i_triggerEntIndex))
         {
-            QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to spawn trigger_multiple for %d's credit drop!", i_client);
+            QSR_LogMessage(MODULE_NAME, "Unable to spawn trigger_multiple for %d's credit drop!", i_client);
             gST_pickup[i_client].Reset();
             QSR_NotifyUser(i_userid, gST_sounds.s_errorSound, "%t", "QSR_FailedToMakeCreditDrop", i_client, gST_chatFormatting.s_errorColor, "Failed to spawn trigger_multiple");
             return false;
@@ -475,7 +475,7 @@ any Native_QSRCreateCreditPickup(Handle plugin, int numParams)
     }
     else
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to create trigger_multiple for %d's credit drop!", i_client);
+        QSR_LogMessage(MODULE_NAME, "Unable to create trigger_multiple for %d's credit drop!", i_client);
         QSR_NotifyUser(i_userid, gST_sounds.s_errorSound, "%t", "QSR_FailedToMakeCreditDrop", i_client, gST_chatFormatting.s_errorColor, "Failed to create trigger_multiple");
         gST_pickup[i_client].Reset();
         return false;
@@ -489,7 +489,7 @@ void SQLCB_DefaultCallback(Database db, DBResultSet results, const char[] error,
 {
     if (error[0])
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, error);
+        QSR_LogMessage(MODULE_NAME, error);
     }
 }
 
@@ -521,7 +521,7 @@ void Timer_CreatePickupTrigger(Handle timer, DataPack info)
     AcceptEntityInput(i_triggerEntIndex, "Enable");
     if (!SDKHookEx(i_triggerEntIndex, SDKHook_StartTouchPost, SDKHCB_PickupStartTouchPost))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to create StartTouchPost hook for %d's credit drop!", i_client);
+        QSR_LogMessage(MODULE_NAME, "Unable to create StartTouchPost hook for %d's credit drop!", i_client);
         gST_pickup[i_client].Reset();
         QSR_NotifyUser(i_userid, gST_sounds.s_errorSound, "%t", "QSR_FailedToMakeCreditDrop", i_client, gST_chatFormatting.s_errorColor, "Failed to hook StartTouchPost");
         return;
@@ -606,7 +606,7 @@ void SDKHCB_PickupStartTouchPost(int entity, int other)
         int i_pickupOwner = StringToInt(s_entityName), i_pickupOwnerClient = GetClientOfUserId(i_pickupOwner);
         if (!QSR_IsValidClient(i_pickupOwnerClient))
         {
-            QSR_LogMessage(gH_logFile, MODULE_NAME, "UserID %d is no longer connected. Deleting pickup.", gST_pickup[i_pickupOwnerClient].i_ownerID);
+            QSR_LogMessage(MODULE_NAME, "UserID %d is no longer connected. Deleting pickup.", gST_pickup[i_pickupOwnerClient].i_ownerID);
             QSR_NotifyUser(i_userid, gST_sounds.s_infoSound, "%t", "QSR_PickupPlayerNotConnected", gST_chatFormatting.s_errorColor);
 
             for (int i = 1; i < MaxClients; i++)
@@ -752,7 +752,7 @@ Action CMD_GetCredits(int client, int args)
 
     if (!QSR_IsPlayerFetched(userid))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "userid %d has not been fetched from DB yet, cannot get player credits.", userid);
+        QSR_LogMessage(MODULE_NAME, "userid %d has not been fetched from DB yet, cannot get player credits.", userid);
         QSR_NotifyUser(userid, gST_sounds.s_errorSound, "%T", "QSR_CreditsNotFetched", client,
         gST_chatFormatting.s_errorColor, gST_bankOptions.s_creditsName,
         gST_chatFormatting.s_commandColor, gST_chatFormatting.s_errorColor);
@@ -1198,7 +1198,7 @@ Action CMD_ModCred(int client, int args)
             gST_bankOptions.s_walletName, gST_chatFormatting.s_infoColor);
         }
 
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Admin %s (%s) gave %s %d %s(2)", s_adminName, s_authID, s_playerName, i_amt, gST_bankOptions.s_creditsName);
+        QSR_LogMessage(MODULE_NAME, "Admin %s (%s) gave %s %d %s(2)", s_adminName, s_authID, s_playerName, i_amt, gST_bankOptions.s_creditsName);
         QSR_ModPlayerCredits(i_targetUser, i_amt, false);
     }
 

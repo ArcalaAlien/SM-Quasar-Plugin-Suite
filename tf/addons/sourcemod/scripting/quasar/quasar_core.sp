@@ -15,7 +15,6 @@ QSRChatFormat gST_chatFormatStrings;
 QSRGeneralSounds gST_sounds;
 Handle  gH_checkGameUpdateTimer = null;
 
-static Database gH_db = null; // The handle for the Database
 static File gH_logFile = null;
 
 // Forwards
@@ -50,7 +49,7 @@ ConVar gH_CVR_infoSound = null;
 
 public Plugin myinfo =
 {
-    name = "[QSR] Quasar Plugin Suite (Core)",
+    name = "[QUASAR] Quasar Plugin Suite (Core)",
     author = PLUGIN_AUTHOR,
     description = "Contains core methods and data shared between Quasar plugin suite.",
     version = PLUGIN_VERSION,
@@ -65,6 +64,9 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("QSR_PrintCenterTextEx",       Native_QSRPrintCenterTextEx);
     CreateNative("QSR_PrintCenterTextAllEx",    Native_QSRPrintCenterTextAllEx);
     CreateNative("QSR_NotifyUser",              Native_QSRNotifyUser);
+    CreateNative("QSR_LogMessage",              Native_QSRLogMessage);
+    CreateNative("QSR_SilentLog",               Native_QSRSilentLog);
+    CreateNative("QSR_ThrowError",              Native_QSRThrowError);
 
     gB_late = late;
 }
@@ -79,7 +81,7 @@ public void OnPluginStart()
 
     // AutoExecConfig Setup
     AutoExecConfig_SetFile("plugin.quasar_core");
-    gH_CVR_queryLogFile         = AutoExecConfig_CreateConVar("sm_quasar_logfile",              "logs/quasar-logs", "The default file to store queries and messages from the plugin suite, relative to the sourcemod folder. Leave off the file extension.", FCVAR_NONE);
+    gH_CVR_logFile              = AutoExecConfig_CreateConVar("sm_quasar_logfile",              "logs/quasar-logs", "The default file to store queries and messages from the plugin suite, relative to the sourcemod folder. Leave off the file extension.", FCVAR_NONE);
 
     // Chat Options
     gH_CVR_chatPrefix           = AutoExecConfig_CreateConVar("sm_quasar_msg_prefix",           "{mediumorchid}[{turquoise}QSR{mediumorchid}] ", "The prefix the plugin uses when sending messages to chat. 64 chars max.", FCVAR_NONE);
@@ -159,7 +161,7 @@ public void OnConfigsExecuted()
     FormatEx(s_logPathCVAR, sizeof(s_logPathCVAR), "%s-%s.log", s_logPathCVAR, s_time);
 
     BuildPath(Path_SM, s_logPath, sizeof(s_logPath), s_logPathCVAR);
-    gH_logFile = OpenFile(s_logPath, "a+");
+    gH_logFile = OpenFile(s_logPath, "a");
     if (gH_logFile != null)
     {
         gH_logFile.WriteLine("----------------------");
@@ -173,10 +175,6 @@ public void OnConfigsExecuted()
     else { LogError("COULD NOT CREATE LOG FILE!"); }
 
     /** CVARS **/
-
-    // Important
-    gH_CVR_dbConfig.GetString(gS_dbProfile, sizeof(gS_dbProfile));
-    gH_CVR_subserver.GetString(gS_subserver, sizeof(gS_subserver));
 
     // Chat
     gH_CVR_chatPrefix.GetString(    gST_chatFormatStrings.s_prefix,         sizeof(gST_chatFormatStrings.s_prefix));
@@ -228,6 +226,14 @@ public void OnConfigsExecuted()
     Call_PushCell(h_soundMap);
     Call_Finish();
     h_soundMap.Close();
+}
+
+public void OnMapStart()
+{
+    QSR_LogMessage(
+        MODULE_NAME,
+        "COCKHOLE"
+    );
 }
 
 /*
@@ -347,16 +353,82 @@ void Native_QSRPrintCenterTextAllEx(Handle plugin, int numParams)
     }
 }
 
+void Native_QSRLogMessage(Handle plugin, int numParams)
+{
+    char s_nModule[32],
+         f_msg[768], 
+         line[1024], 
+         s_time[24];
+    
+    GetNativeString(1, s_nModule, sizeof(s_nModule));
+    SetGlobalTransTarget(LANG_SERVER);
+    FormatNativeString(
+        0, 2, 3, sizeof(f_msg), .out_string=f_msg);
+
+    FormatTime(s_time, sizeof(s_time), "%D %T");
+    FormatEx(line, sizeof(line), "[QUASAR (%s) %s] %s", s_nModule, s_time, f_msg);
+
+    if (gH_logFile != null)  {
+        gH_logFile.Flush();
+        gH_logFile.WriteLine(line);
+        PrintToServer(line);
+    }
+}
+
+void Native_QSRSilentLog(Handle plugin, int numParams)
+{
+    char s_nModule[32],
+         f_msg[3072], 
+         line[3072], 
+         s_time[24];
+    
+    GetNativeString(1, s_nModule, sizeof(s_nModule));
+    SetGlobalTransTarget(LANG_SERVER);
+    FormatNativeString(
+        0, 2, 3, sizeof(f_msg), .out_string=f_msg);
+
+    FormatTime(s_time, sizeof(s_time), "%D %T");
+    FormatEx(line, sizeof(line), "[QUASAR (%s) %s] %s", s_nModule, s_time, f_msg);
+
+    if (gH_logFile != null) {
+        gH_logFile.Flush();
+        gH_logFile.WriteLine(line);
+    }
+}
+
+void Native_QSRThrowError(Handle plugin, int numParams)
+{
+    char s_nModule[32],
+         f_msg[768], 
+         line[1024], 
+         s_time[24];
+    
+    GetNativeString(1, s_nModule, sizeof(s_nModule));
+    SetGlobalTransTarget(LANG_SERVER);
+    FormatNativeString(
+        0, 2, 3, sizeof(f_msg), .out_string=f_msg);
+
+    FormatTime(s_time, sizeof(s_time), "%D %T");
+    FormatEx(line, sizeof(line), "[QUASAR_ERROR (%s) %s] %s", s_nModule, s_time, f_msg);
+
+    if (gH_logFile != null) {
+        gH_logFile.Flush();
+        gH_logFile.WriteLine(line);
+    }
+
+    ThrowError(line);
+}
+
 // Callbacks
 void Timer_RestartServer(Handle timer)
 {
-    QSR_LogMessage(gH_logFile,  MODULE_NAME, "Restarting TF2 Server!");
+    QSR_LogMessage( MODULE_NAME, "Restarting TF2 Server!");
     ServerCommand("exit");
 }
 
 Action CMD_OpenSettingsMenu(int client, int args)
 {
-    QSR_LogMessage(gH_logFile,  MODULE_NAME, "Settings menu attempted to be open");
+    QSR_LogMessage( MODULE_NAME, "Settings menu attempted to be open");
     return Plugin_Handled;
 }
 

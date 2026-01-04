@@ -115,7 +115,7 @@ Cookie gH_CK_customFOV                  = null;
 
 public Plugin myinfo =
 {
-    name = "[QSR] Quasar Plugin Suite (Misc Functions)",
+    name = "[QUASAR] Quasar Plugin Suite (Misc Functions)",
     author = PLUGIN_AUTHOR,
     description = "A plugin full of miscellaneous functions and features.",
     version = PLUGIN_VERSION,
@@ -725,7 +725,7 @@ void QSR_InternalGrantSpawnProtection(int userid)
 
     if (!QSR_IsValidClientEX(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_GrantSpawnProtection: Tried granting invalid client %d spawn protection!", i_client);
+        QSR_LogMessage(MODULE_NAME, "QSR_GrantSpawnProtection: Tried granting invalid client %d spawn protection!", i_client);
         return;
     }
 
@@ -768,7 +768,7 @@ void QSR_InternalRemoveSpawnProtection(int userid)
 
     if (!QSR_IsValidClientEX(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_RemoveSpawnProtection: Tried removing spawn protection from invalid client %d", i_client);
+        QSR_LogMessage(MODULE_NAME, "QSR_RemoveSpawnProtection: Tried removing spawn protection from invalid client %d", i_client);
         return;
     }
 
@@ -798,7 +798,7 @@ void QSR_InternalSetPlayerPOV(int userid, QSRPov pov)
     int i_client = GetClientOfUserId(userid);
     if (!QSR_IsValidClientEX(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Attempted to change POV of invalid client %d (userid %d)!", i_client, userid);
+        QSR_LogMessage(MODULE_NAME, "Attempted to change POV of invalid client %d (userid %d)!", i_client, userid);
         return;
     }
 
@@ -815,14 +815,14 @@ void QSR_InternalSetPlayerPOV(int userid, QSRPov pov)
     // Set client to first person.
     if (pov == POV_FirstPerson)
     {
-        //QSR_LogMessage(gH_logFile, MODULE_NAME, "Set POV of client %d (userid %d) to First Person.", i_client, userid);
+        //QSR_LogMessage(MODULE_NAME, "Set POV of client %d (userid %d) to First Person.", i_client, userid);
         gE_customPOVs[i_client] = POV_FirstPerson;
         SetVariantInt(0);
         AcceptEntityInput(i_client, "SetForcedTauntCam", i_client);
         return;
     }
 
-    //QSR_LogMessage(gH_logFile, MODULE_NAME, "Set POV of client %d (userid %d) to Third Person.", i_client, userid);
+    //QSR_LogMessage(MODULE_NAME, "Set POV of client %d (userid %d) to Third Person.", i_client, userid);
     // Set client to third person.
     gE_customPOVs[i_client] = POV_ThirdPerson;
     SetVariantInt(1);
@@ -834,7 +834,7 @@ void QSR_InternalSetPlayerFOV(int userid, int fov)
     int i_client = GetClientOfUserId(userid);
     if (!QSR_IsValidClientEX(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Attempted to change FOV of invalid client %d (userid %d)!", i_client, userid);
+        QSR_LogMessage(MODULE_NAME, "Attempted to change FOV of invalid client %d (userid %d)!", i_client, userid);
         return;
     }
 
@@ -843,7 +843,7 @@ void QSR_InternalSetPlayerFOV(int userid, int fov)
     // Are we resetting the player's FOV?
     if (fov == 0)
     {
-        //QSR_LogMessage(gH_logFile, MODULE_NAME, "Reset client %d (userid %d)'s FOV to %d.", i_client, userid, gI_defaultFOV[i_client]);
+        //QSR_LogMessage(MODULE_NAME, "Reset client %d (userid %d)'s FOV to %d.", i_client, userid, gI_defaultFOV[i_client]);
         gI_customFOV[i_client] = gI_defaultFOV[i_client];
         SetEntProp(i_client, Prop_Send, "m_iFOV", gI_defaultFOV[i_client]);
         SetEntProp(i_client, Prop_Send, "m_iDefaultFOV", gI_defaultFOV[i_client]);
@@ -851,7 +851,7 @@ void QSR_InternalSetPlayerFOV(int userid, int fov)
     }
 
     // We're setting a new custom FOV
-    //QSR_LogMessage(gH_logFile, MODULE_NAME, "Set client %d (userid %d)'s FOV to %d.", i_client, userid, fov);
+    //QSR_LogMessage(MODULE_NAME, "Set client %d (userid %d)'s FOV to %d.", i_client, userid, fov);
     gI_customFOV[i_client] = fov;
     SetEntProp(i_client, Prop_Send, "m_iFOV", gI_customFOV[i_client]);
     SetEntProp(i_client, Prop_Send, "m_iDefaultFOV", gI_customFOV[i_client]);
@@ -884,7 +884,7 @@ any Native_QSRSpawnBreadAtPlayer(Handle plugin, int numParams)
 {
     if (gI_breadCount == gH_CVR_totalAmountOfBread.IntValue)
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "ERROR! Bread Overflow! There are too many bread models to spawn this.");
+        QSR_LogMessage(MODULE_NAME, "ERROR! Bread Overflow! There are too many bread models to spawn this.");
         return false;
     }
 
@@ -893,7 +893,7 @@ any Native_QSRSpawnBreadAtPlayer(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_SpawnBreadAtPlayer: Attempted to spawn bread for invalid client index %d", i_client);
+        QSR_LogMessage(MODULE_NAME, "QSR_SpawnBreadAtPlayer: Attempted to spawn bread for invalid client index %d", i_client);
         return false;
     }
 
@@ -907,7 +907,7 @@ any Native_QSRSpawnBreadAtPlayer(Handle plugin, int numParams)
     QSRBreadEntity bread = new QSRBreadEntity();
     if (bread == view_as<QSRBreadEntity>(INVALID_HANDLE))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "ERROR! QSR_SpawnBreadAtPlayer was unable to create a new BreadEntity handle!\nCurrent amount of bread: %d", gI_breadCount);
+        QSR_LogMessage(MODULE_NAME, "ERROR! QSR_SpawnBreadAtPlayer was unable to create a new BreadEntity handle!\nCurrent amount of bread: %d", gI_breadCount);
         return false;
     }
 
@@ -985,7 +985,7 @@ any Native_QSRPlayerEnabledSP(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_PlayerEnabledSP: userid %d is not a valid target!", i_userid);
+        QSR_LogMessage(MODULE_NAME, "QSR_PlayerEnabledSP: userid %d is not a valid target!", i_userid);
         return false;
     }
 
@@ -999,7 +999,7 @@ any Native_QSRIsPlayerProtected(Handle plugin, int numParams)
 
     if (!QSR_IsValidClientEX(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_IsPlayerProtected: userid %d is not a valid target!", i_userid);
+        QSR_LogMessage(MODULE_NAME, "QSR_IsPlayerProtected: userid %d is not a valid target!", i_userid);
         return false;
     }
 
@@ -1013,7 +1013,7 @@ void Native_QSRToggleSpawnProtection(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_ToggleSpawnProtection: userid %d is not a valid target!", i_userid);
+        QSR_LogMessage(MODULE_NAME, "QSR_ToggleSpawnProtection: userid %d is not a valid target!", i_userid);
         return;
     }
 
@@ -1046,7 +1046,7 @@ any Native_QSRPlayerHasCRespawnTime(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_PlayerHasCRespawnTime: ERROR! userid %d is not valid!", i_userid);
+        QSR_LogMessage(MODULE_NAME, "QSR_PlayerHasCRespawnTime: ERROR! userid %d is not valid!", i_userid);
         return false;
     }
 
@@ -1061,7 +1061,7 @@ any Native_QSRGetPlayerCRespawnTime(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_GetPlayerCRespawnTime: ERROR! userid %d is not valid!", userid);
+        QSR_LogMessage(MODULE_NAME, "QSR_GetPlayerCRespawnTime: ERROR! userid %d is not valid!", userid);
         return -1.0;
     }
 
@@ -1075,7 +1075,7 @@ void Native_QSRSetPlayerCRespawnTime(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_SetPlayerCRespawnTime: ERROR! userid %d is not valid!", userid);
+        QSR_LogMessage(MODULE_NAME, "QSR_SetPlayerCRespawnTime: ERROR! userid %d is not valid!", userid);
         return;
     }
 
@@ -1095,7 +1095,7 @@ any Native_QSRGetRespawnTimeLeft(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_GetRespawnTimeLeft: ERROR! userid %d is not valid!", userid);
+        QSR_LogMessage(MODULE_NAME, "QSR_GetRespawnTimeLeft: ERROR! userid %d is not valid!", userid);
         return -1.0;
     }
 
@@ -1109,7 +1109,7 @@ any Native_QSRIsPlayerRespawning(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_IsPlayerRespawning: ERROR! userid %d is not valid!", userid);
+        QSR_LogMessage(MODULE_NAME, "QSR_IsPlayerRespawning: ERROR! userid %d is not valid!", userid);
         return false;
     }
 
@@ -1123,7 +1123,7 @@ void Native_QSRForcePlayerRespawn(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "QSR_ForcePlayerRespawn: ERROR! userid %d is not valid!", userid);
+        QSR_LogMessage(MODULE_NAME, "QSR_ForcePlayerRespawn: ERROR! userid %d is not valid!", userid);
         return;
     }
 
@@ -1161,7 +1161,7 @@ void Native_QSRSetPlayerPOV(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to set invalid client %d (userid %d)'s FOV!", i_client, i_userid);
+        QSR_LogMessage(MODULE_NAME, "Unable to set invalid client %d (userid %d)'s FOV!", i_client, i_userid);
         return;
     }
 
@@ -1184,7 +1184,7 @@ int Native_QSRGetPlayerFOV(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to request invalid client %d (userid %d)'s FOV!", i_client, i_userid);
+        QSR_LogMessage(MODULE_NAME, "Unable to request invalid client %d (userid %d)'s FOV!", i_client, i_userid);
         return -1;
     }
 
@@ -1199,7 +1199,7 @@ int Native_QSRGetPlayerDefaultFOV(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to request invalid client %d's default FOV!", i_client);
+        QSR_LogMessage(MODULE_NAME, "Unable to request invalid client %d's default FOV!", i_client);
         return -1;
     }
 
@@ -1215,7 +1215,7 @@ void Native_QSRSetPlayerFOV(Handle plugin, int numParams)
 
     if (!QSR_IsValidClient(i_client))
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to set invalid client %d's FOV!", i_client);
+        QSR_LogMessage(MODULE_NAME, "Unable to set invalid client %d's FOV!", i_client);
         return;
     }
 

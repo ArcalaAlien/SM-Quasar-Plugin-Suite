@@ -11,7 +11,7 @@
 #define PLUGIN_VERSION  "0.1.0"
 #define PLUGIN_URL      "https://github.com/ArcalaAlien/SourceMod-QuasarPluginSuite"
 
-#define MODULE_NAME         "Core"
+#define MODULE_NAME     "Core"
 
 #define SERVER 0
 
@@ -154,13 +154,19 @@ native void QSR_PrintCenterTextAllEx(float pos[2], float holdTime, int color1[4]
  *
  *  @param userid       The client userid to send the message to.
  *  @param sound        The sound to play to the user.
- *  @param message      The message to send to the user.
+ *  @param message      The message to send to the user.    
  *  @param ...          Paramaters for formatting.
  *
  *  @return             True if we notified the client, false if not.
  */
 native bool QSR_NotifyUser(int userid, const char[] sound, const char[] message, any ...);
 
+native void QSR_LogMessage(const char[] module, const char[] message, any ...);
+
+// Primarily used to log queries in transactions.
+native void QSR_SilentLog(const char[] module, const char[] message, any ...);
+
+native void QSR_ThrowError(const char[] module, const char[] message, any ...);
 /*          */
 /* FORWARDS */
 /*          */
@@ -216,41 +222,6 @@ stock int QSR_IsValidClientEX(int client)
     if (client && IsClientInGame(client) && !IsFakeClient(client) && IsPlayerAlive(GetClientUserId(client))) { return GetClientUserId(client); }
 
     return 0;
-}
-
-/**
- *  Logs a message to the server console, and to the log file.
- *
- *  @param log      Log file to save to.
- *  @param message  The message to save.
- *  @param ...      data for formatting
- */
-stock void QSR_LogMessage(File log, const char[] module, const char[] message, any ...)
-{
-    char f_msg[1025], line[512], s_time[24];
-
-    SetGlobalTransTarget(LANG_SERVER);
-    VFormat(f_msg, sizeof(f_msg), message, 4);
-
-    FormatTime(s_time, sizeof(s_time), "%D %T");
-    FormatEx(line, sizeof(line), "[QSR (%s) %s] %s", module, s_time, f_msg);
-
-    if (log != null) { log.WriteLine(line); }
-    PrintToServer(line);
-}
-
-stock void QSR_ThrowError(File log, const char[] module, const char[] message, any ...)
-{
-    char f_msg[1025], line[512], s_time[24];
-
-    SetGlobalTransTarget(LANG_SERVER);
-    VFormat(f_msg, sizeof(f_msg), message, 4);
-
-    FormatTime(s_time, sizeof(s_time), "%D %T");
-    FormatEx(line, sizeof(line), "[QSR (%s) %s] ERROR! %s", module, s_time, f_msg);
-
-    if (log != null) { log.WriteLine(line); }
-    ThrowError(line);
 }
 
 /**

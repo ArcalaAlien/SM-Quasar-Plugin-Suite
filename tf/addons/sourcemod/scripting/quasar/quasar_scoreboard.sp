@@ -39,7 +39,7 @@ ConVar gH_CVR_killstreakModulo  = null;
 
 public Plugin myinfo =
 {
-    name = "[QSR] Quasar Plugin Suite (Scoreboard Handler)",
+    name = "[QUASAR] Quasar Plugin Suite (Scoreboard Handler)",
     author = PLUGIN_AUTHOR,
     description = "Description",
     version = PLUGIN_VERSION,
@@ -206,7 +206,7 @@ void Event_OnPlayerHurt(Event event, const char[] name, bool dontBroadcast)
         i_atkClient = GetClientOfUserId(i_attacker),
         i_vicClient = GetClientOfUserId(i_victim);
 
-    QSR_LogMessage(gH_logFile, MODULE_NAME, "Attacker %d hurt Victim %d with weapon %d for %d damage", i_attacker, i_victim, i_damage, i_weapon);
+    QSR_LogMessage(MODULE_NAME, "Attacker %d hurt Victim %d with weapon %d for %d damage", i_attacker, i_victim, i_damage, i_weapon);
 
     if (QSR_IsValidClient(i_atkClient) && QSR_IsPlayerFetched(i_attacker))
     {
@@ -216,7 +216,7 @@ void Event_OnPlayerHurt(Event event, const char[] name, bool dontBroadcast)
         }
 
         gST_scores[i_atkClient].i_damageDone += i_damage;
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Attacker %d Total Damage: %d", i_attacker, gST_scores[i_atkClient].i_damageDone);
+        QSR_LogMessage(MODULE_NAME, "Attacker %d Total Damage: %d", i_attacker, gST_scores[i_atkClient].i_damageDone);
 
         if (i_damage > gST_scores[i_atkClient].i_mostDamageDone)
         {
@@ -239,7 +239,7 @@ void Event_OnPlayerHurt(Event event, const char[] name, bool dontBroadcast)
         }
 
         gST_scores[i_vicClient].i_damageTaken += i_damage;
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Victim %d Total Damage: %d", i_attacker, gST_scores[i_vicClient].i_damageTaken);
+        QSR_LogMessage(MODULE_NAME, "Victim %d Total Damage: %d", i_attacker, gST_scores[i_vicClient].i_damageTaken);
 
         if (i_damage > gST_scores[i_vicClient].i_mostDamageTaken)
         {
@@ -337,7 +337,7 @@ void SQLCB_DefaultCallback(Database db, DBResultSet results, const char[] error,
 {
     if (error[0])
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, error);
+        QSR_LogMessage(MODULE_NAME, error);
     }
 }
 

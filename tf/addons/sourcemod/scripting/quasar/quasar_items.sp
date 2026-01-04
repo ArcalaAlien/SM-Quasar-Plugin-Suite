@@ -22,7 +22,7 @@ bool gB_dbConnected = false;
 
 public Plugin myinfo =
 {
-    name = "[QSR] Quasar Plugin Suite (Item Handler)",
+    name = "[QUASAR] Quasar Plugin Suite (Item Handler)",
     author = PLUGIN_AUTHOR,
     description = "Description",
     version = PLUGIN_VERSION,
@@ -60,7 +60,7 @@ public void QSR_OnDatabaseConnected(Database& db)
     WHERE steam_id = ?", s_error, sizeof(s_error)));
     if (s_error[0])
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME,  s_error);
+        QSR_LogMessage(MODULE_NAME,  s_error);
         s_error = EMPTY_STRING;
     }
 
@@ -70,7 +70,7 @@ public void QSR_OnDatabaseConnected(Database& db)
     WHERE steam_id = ?", s_error, sizeof(s_error)));
     if (s_error[0])
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME,  s_error);
+        QSR_LogMessage(MODULE_NAME,  s_error);
         s_error = EMPTY_STRING;
     }
 
@@ -80,7 +80,7 @@ public void QSR_OnDatabaseConnected(Database& db)
     WHERE steam_id = ?", s_error, sizeof(s_error)));
     if (s_error[0])
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME,  s_error);
+        QSR_LogMessage(MODULE_NAME,  s_error);
         s_error = EMPTY_STRING;
     }
 
@@ -90,7 +90,7 @@ public void QSR_OnDatabaseConnected(Database& db)
     WHERE steam_id = ?", s_error, sizeof(s_error)));
     if (s_error[0])
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME,  s_error);
+        QSR_LogMessage(MODULE_NAME,  s_error);
         s_error = EMPTY_STRING;
     }
 
@@ -106,11 +106,11 @@ public void QSR_OnDatabaseConnected(Database& db)
     WHERE steam_id = ?", s_error, sizeof(s_error)));
     if (s_error[0])
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME,  s_error);
+        QSR_LogMessage(MODULE_NAME,  s_error);
         s_error = EMPTY_STRING;
     }
 
-    QSR_LogMessage(gH_logFile, MODULE_NAME,  "Prepared all query statements!");
+    QSR_LogMessage(MODULE_NAME,  "Prepared all query statements!");
 }
 
 public void QSR_OnLogFileMade(File& file)

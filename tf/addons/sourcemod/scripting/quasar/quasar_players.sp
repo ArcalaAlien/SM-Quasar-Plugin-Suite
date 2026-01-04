@@ -36,7 +36,7 @@ Handle gH_FWD_pointsChanged         = INVALID_HANDLE;
 
 public Plugin myinfo =
 {
-    name = "[QSR] Quasar Plugin Suite (Player Handler)",
+    name = "[QUASAR] Quasar Plugin Suite (Player Handler)",
     author = PLUGIN_AUTHOR,
     description = "Keeps all of the player info in one place",
     version = PLUGIN_VERSION,
@@ -356,7 +356,7 @@ int Native_QSRFindPlayerByName(Handle plugin, int numParams)
 
         if (StrContains(gST_players[i].name, name, false) != -1)
         {
-            QSR_LogMessage(gH_logFile, MODULE_NAME, "Found match for '%s', userid '%d'", name, userid);
+            QSR_LogMessage(MODULE_NAME, "Found match for '%s', userid '%d'", name, userid);
             userid = GetClientUserId(i);
             break;
         }
@@ -519,7 +519,7 @@ void Timer_RetrySendLogin(Handle timer, int client)
     {
         if (gST_players[client].loginAttempts == 5)
         {
-            QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to send login info for Client: %d Steam64ID: %s after 5 attempts!", client, gST_players[client].steam64ID);
+            QSR_LogMessage(MODULE_NAME, "Unable to send login info for Client: %d Steam64ID: %s after 5 attempts!", client, gST_players[client].steam64ID);
             QSR_NotifyUser(GetClientUserId(client), gST_sounds.s_errorSound,
             "%t", "QSR_UnableToLogIn", client,
             gST_chatFormatStrings.s_errorColor, gST_chatFormatStrings.s_commandColor, gST_chatFormatStrings.s_errorColor);
@@ -539,7 +539,7 @@ void Timer_PopulatePlayerInfo(Handle timer, int client)
     {
         if (gST_players[client].fetchInfoAttempts == 5)
         {
-            QSR_LogMessage(gH_logFile, MODULE_NAME, "ERROR: Unable to get player info for SteamID %s after 5 attempts!", gST_players[client].steam64ID);
+            QSR_LogMessage(MODULE_NAME, "ERROR: Unable to get player info for SteamID %s after 5 attempts!", gST_players[client].steam64ID);
             QSR_NotifyUser(GetClientUserId(client), gST_sounds.s_errorSound,
             "%T", "QSR_UnableToFetchInfo", client,
             gST_chatFormatStrings.s_errorColor, gST_chatFormatStrings.s_commandColor, gST_chatFormatStrings.s_errorColor);
@@ -565,7 +565,7 @@ void SQLCB_DefaultCallback(Database db, DBResultSet results, const char[] error,
 {
     if (error[0])
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, error);
+        QSR_LogMessage(MODULE_NAME, error);
     }
 }
 
@@ -574,7 +574,7 @@ void SQLCB_SentLoginInfo(Database db, DBResultSet results, const char[] error, i
 {
     if (error[0])
     {
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Error sending login info for CLIENT: %d Attempting again in 5s\nERROR: %s", client, error);
+        QSR_LogMessage(MODULE_NAME, "Error sending login info for CLIENT: %d Attempting again in 5s\nERROR: %s", client, error);
         gST_players[client].loginAttempts++;
         CreateTimer(5.0, Timer_RetrySendLogin, client);
         return;
@@ -589,7 +589,7 @@ void SQLCB_PopulatePlayerInfo(Database db, DBResultSet results, const char[] err
     {
         gST_players[client].fetchInfoAttempts++;
         CreateTimer(5.0, Timer_PopulatePlayerInfo, client);
-        QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to fetch player info! Attempting again in 5s.\nERROR: %s", error);
+        QSR_LogMessage(MODULE_NAME, "Unable to fetch player info! Attempting again in 5s.\nERROR: %s", error);
         return;
     }
 
@@ -643,7 +643,7 @@ void SQLCB_PopulatePlayerInfo(Database db, DBResultSet results, const char[] err
         {
             gST_players[client].fetchInfoAttempts++;
             CreateTimer(5.0, Timer_PopulatePlayerInfo, client);
-            QSR_LogMessage(gH_logFile, MODULE_NAME, "Unable to fetch player info! Attempting again in 5s.\nERROR: %s", error);
+            QSR_LogMessage(MODULE_NAME, "Unable to fetch player info! Attempting again in 5s.\nERROR: %s", error);
             return;
         }
 

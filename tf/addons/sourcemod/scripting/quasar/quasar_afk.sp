@@ -9,7 +9,7 @@
 
 public Plugin myinfo =
 {
-    name = "[QSR] Quasar Plugin Suite (Store Handler)",
+    name = "[QUASAR] Quasar Plugin Suite (Store Handler)",
     author = PLUGIN_AUTHOR,
     description = "Description",
     version = PLUGIN_VERSION,

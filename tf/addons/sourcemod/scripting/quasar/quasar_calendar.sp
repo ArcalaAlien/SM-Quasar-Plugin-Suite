@@ -12,7 +12,7 @@ bool     gB_late = false;
 
 public Plugin myinfo =
 {
-    name = "[QSR] Quasar Plugin Suite (Calendar)",
+    name = "[QUASAR] Quasar Plugin Suite (Calendar)",
     author = PLUGIN_AUTHOR,
     description = "Keeps track of server time and allows for date-based events.",
     version = PLUGIN_VERSION,
