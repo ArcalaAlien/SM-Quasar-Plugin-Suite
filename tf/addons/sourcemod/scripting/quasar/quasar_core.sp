@@ -96,12 +96,12 @@ public void OnPluginStart()
 
     // Sound options
     gH_CVR_afkWarnSound         = AutoExecConfig_CreateConVar("sm_quasar_afk_warn_sound",       "",              "Controls the sound played when Quasar sends a warning to a player about to be afk. Searches in the tf/sound folder.", FCVAR_NONE);
-    gH_CVR_afkMoveSound         = AutoExecConfig_CreateConVar("sm_quasar_afk_move_sound",       "",              "Controls the sound played when Quasar marks a player as AFK", FCVAR_NONE);
+    gH_CVR_afkMoveSound         = AutoExecConfig_CreateConVar("sm_quasar_afk_move_sound",       "",              "Controls the sound played when Quasar marks a player as AFK. Searches in the tf/sound folder.", FCVAR_NONE);
     gH_CVR_errorSound           = AutoExecConfig_CreateConVar("sm_quasar_error_sound",          "",              "Controls the sound played to let the user know an error has occured. Searches in tf/sound.", FCVAR_NONE);
-    gH_CVR_loginSound           = AutoExecConfig_CreateConVar("sm_quasar_login_sound",          "",              "Controls the sound played when a user first logs into the server.", FCVAR_NONE);
-    gH_CVR_addCreditsSound      = AutoExecConfig_CreateConVar("sm_quasar_add_credits_sound",    "",              "Controls the sound played when a user gains credits.", FCVAR_NONE);
-    gH_CVR_buyItemSound         = AutoExecConfig_CreateConVar("sm_quasar_buy_item_sound",       "",              "Controls the sound played when a user buys an item from the store.", FCVAR_NONE);
-    gH_CVR_infoSound            = AutoExecConfig_CreateConVar("sm_quasar_info_sound",           "",              "Controls the sound played to alert the user of something. Usually the results of an action they have taken.", FCVAR_NONE);
+    gH_CVR_loginSound           = AutoExecConfig_CreateConVar("sm_quasar_login_sound",          "",              "Controls the sound played when a user logs into the server. Searches in the tf/sound folder.", FCVAR_NONE);
+    gH_CVR_addCreditsSound      = AutoExecConfig_CreateConVar("sm_quasar_add_credits_sound",    "",              "Controls the sound played when a user gains credits. Searches in the tf/sound folder.", FCVAR_NONE);
+    gH_CVR_buyItemSound         = AutoExecConfig_CreateConVar("sm_quasar_buy_item_sound",       "",              "Controls the sound played when a user buys an item from the store. Searches in the tf/sound folder.", FCVAR_NONE);
+    gH_CVR_infoSound            = AutoExecConfig_CreateConVar("sm_quasar_info_sound",           "",              "Controls the sound played to alert the user of something. Usually the results of an action they have taken. Searches in the tf/sound folder.", FCVAR_NONE);
 
     AutoExecConfig_ExecuteFile();
     AutoExecConfig_CleanFile();
@@ -356,7 +356,7 @@ void Native_QSRPrintCenterTextAllEx(Handle plugin, int numParams)
 void Native_QSRLogMessage(Handle plugin, int numParams)
 {
     char s_nModule[32],
-         f_msg[768], 
+         f_msg[1024], 
          line[1024], 
          s_time[24];
     
@@ -388,7 +388,7 @@ void Native_QSRSilentLog(Handle plugin, int numParams)
         0, 2, 3, sizeof(f_msg), .out_string=f_msg);
 
     FormatTime(s_time, sizeof(s_time), "%D %T");
-    FormatEx(line, sizeof(line), "[QUASAR (%s) %s] %s", s_nModule, s_time, f_msg);
+    FormatEx(line, sizeof(line), "[QUASAR (%s) %s]\n%s", s_nModule, s_time, f_msg);
 
     if (gH_logFile != null) {
         gH_logFile.Flush();
@@ -399,7 +399,7 @@ void Native_QSRSilentLog(Handle plugin, int numParams)
 void Native_QSRThrowError(Handle plugin, int numParams)
 {
     char s_nModule[32],
-         f_msg[768], 
+         f_msg[1024], 
          line[1024], 
          s_time[24];
     

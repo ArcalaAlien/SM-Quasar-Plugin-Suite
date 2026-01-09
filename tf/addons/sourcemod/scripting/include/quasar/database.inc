@@ -6,28 +6,33 @@
 #undef MODULE_NAME
 #define MODULE_NAME "Database"
 
-#define DATABASE_VERSION    "QSRDB_V0.1.0"
+#define DATABASE_VERSION    "QSRDB_V0.1.0"  // 0.1.0 for now, even with the sql
+                                            // files finished there's still more
+                                            // updates I have to make.
 
 #define SQL_SETUP_DIR  "scripting/quasar/database/SQL/setup"
-#define SQL_ALTER_DIR   "scripting/quasar/database/SQL/alter"
-#define SQL_INSERT_DIR  "scripting/quasar/database/SQL/insert"
+#define SQL_UPDATE_DIR   "scripting/quasar/database/SQL/update"
 
 #define WAITING_FOR_SETUP view_as<QSRDBSetupStep>(-1)
 
 enum QSRDBVersionStatus {
     DBVer_Equal,
-    DBVer_NeedsUpdated,
+    DBVer_UpdateRequired,
     DBVer_FirstTime
 };
 
 enum QSRDBSetupStep {
-    DBStep_CreateVersionTable = 1,
+    DBStep_SetupInit = 0,
+    DBStep_CreateVersionTable,
     DBStep_CreateTFTables,
     DBStep_CreateGlobalTables,
     DBStep_CreateSubserverTables,
     DBStep_CreateJunctionTables,
     DBStep_CreateTFLoadoutTable,
+    DBStep_CreateTauntLoadoutTable,
     DBStep_CreateViews,
+    DBStep_FillMainWithDefaults,
+    DBStep_FillJuncWithDefaults,
     NUM_SETUP_STEPS // END OF TABLE SETUP!
 };
 

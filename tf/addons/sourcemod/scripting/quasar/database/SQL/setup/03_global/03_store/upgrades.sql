@@ -6,14 +6,11 @@ CREATE TABLE IF NOT EXISTS `quasar`.`upgrades` (
     `description` VARCHAR(128) NOT NULL DEFAULT 'UNKNOWN',
     `price` INT NOT NULL DEFAULT 0,
     `creator_id` VARCHAR(64) NOT NULL DEFAULT 'QUASAR',
-    PRIMARY KEY (
-        `id`,
-        `item_id`,
-        `name`,
-        `description`
-    ),
-    UNIQUE INDEX `idx_upgrade_id`   (`id` ASC),
-    INDEX `idx_upgrade_name` (`name` ASC),
-    INDEX `idx_upgrade_item_id` (`item_id` ASC),
-    INDEX `idx_upgrade_description` (`description` ASC)
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `idx_upgrade_id` (`id` ASC),
+    UNIQUE INDEX `idx_upgrade_name` (`name` ASC),
+    UNIQUE INDEX `idx_upgrade_item_id` (`item_id` ASC),
+    UNIQUE INDEX `idx_upgrade_description` (`description` ASC),
+    INDEX `idx_upgrade_price` (`price` ASC),
+    INDEX `idx_upgrade_creator_id` (`creator_id` ASC)
 );

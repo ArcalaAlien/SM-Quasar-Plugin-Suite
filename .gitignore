@@ -1,25 +1,3 @@
-output
-*.vmt
-*.vtf
-*.mp3
-
-build
-*.smx
-.venv
-
-addons/sourcemod/scripting/include/chat-processor.inc
-addons/sourcemod/scripting/include/colorvariables.inc
-addons/sourcemod/scripting/include/morecolors.inc
-addons/sourcemod/scripting/include/smlib_arrays.inc
-addons/sourcemod/scripting/include/clientprefs_stocks.inc
-addons/sourcemod/scripting/include/clients_methodmap.inc
-addons/sourcemod/scripting/include/menu-stocks.inc
-addons/sourcemod/scripting/include/port64.inc
-addons/sourcemod/scripting/include/disabled
-addons/sourcemod/scripting/chat-processor.sp
-
-materials/snt_trails/!.here
-sound/snt_sounds/!.here
-
+tf/addons/sourcemod/plugins/
 *.mwb
 

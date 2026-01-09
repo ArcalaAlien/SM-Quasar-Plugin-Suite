@@ -7,11 +7,10 @@ CREATE TABLE IF NOT EXISTS `quasar`.`PLREPLACE_vote_log` (
     `voter_name` VARCHAR(128) NOT NULL DEFAULT 'UNKNOWN',
     `target_name` VARCHAR(128) NOT NULL DEFAULT 'UNKNOWN',
     `date` INT NOT NULL DEFAULT -1,
-    PRIMARY KEY (
-        `id`,
-        `voter_steam_id`
-    ),
+    PRIMARY KEY (`id`),
     UNIQUE INDEX `idx_PLREPLACE_vote_log_id` (`id` ASC),
+    UNIQUE INDEX `idx_PLREPLACE_vote_log_date` (`date` ASC),
+    INDEX `idx_PLREPLACE_vote_log_vote_type` (`vote_type` ASC),
     INDEX `idx_PLREPLACE_vote_log_voter_steam_id` (`voter_steam_id` ASC),
     INDEX `idx_PLREPLACE_vote_log_target_steam_id` (`target_steam_id` ASC),
     INDEX `idx_PLREPLACE_vote_log_voter_name` (`voter_name` ASC),

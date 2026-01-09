@@ -17,7 +17,7 @@ static bool gB_dbConnected = false; // Are we connected to the database yet?
 static bool gB_logTransactions = false; // Do we log all queries in a transaction?
 static char gS_dbVersion[24]; // The version number of our database.
 static bool gB_isTableUpdated[view_as<int>(NUM_DBTABLES)];
-static QSRDBSetupStep gE_currentStep = WAITING_FOR_SETUP;
+static QSRDBSetupStep gE_currentSetupStep = WAITING_FOR_SETUP;
 
 // Replace SUBSERVER with gS_subserver if you
 // use these table names!!!!
@@ -40,7 +40,7 @@ static char gS_tableNames[NUM_DBTABLES][] = {
     "quasar.upgrades",
     "quasar.fun_stuff",
     "quasar.chat_colors",
-    "quasar.chat_pack_names",
+    "quasar.color_packs",
     "quasar.SUBSERVER_stats",
     "quasar.SUBSERVER_maps",
     "quasar.SUBSERVER_vote_logs",
@@ -48,7 +48,7 @@ static char gS_tableNames[NUM_DBTABLES][] = {
     "quasar.tf_items_classes",
     "quasar.tf_items_attributes",
     "quasar.players_groups",
-    "quasar.colors_packs",
+    "quasar.colors_in_packs",
     "quasar.player_items",
     "quasar.quasar_loadouts",
     "quasar.tf_loadouts",
@@ -57,6 +57,26 @@ static char gS_tableNames[NUM_DBTABLES][] = {
     "quasar.SUBSERVER_maps_ratings",
     "quasar.[inventories]",
     "quasar.[SUBSERVER_map_ratings]"
+};
+
+static char gS_stepNumbers[][] = {
+    "00",
+    "01", "02", "03", "04", "05", "06",
+    "07", "08", "09", "10", "11", "12"
+};
+
+static char gS_setupStepNames[NUM_SETUP_STEPS][] = {
+    "Setup Init",
+    "Create Version Table",
+    "Create Team Fortress Tables",
+    "Create Main Tables",
+    "Create Subserver Tables",
+    "Create Junction Tables",
+    "Create Team Fortress Loadout Tables",
+    "Create Taunt Loadout Tables",
+    "Create Database Views",
+    "Fill Main Tables with Defaults",
+    "Fill Junction Tables with Defaults"
 };
 
 // ConVars
@@ -142,41 +162,41 @@ public void QSR_OnDBVersionRetrieved(const char[] dbVersion)
     char s_directory[256];
     switch (Internal_IsDatabaseUpToDate()) {
         case DBVer_FirstTime: {
+            gE_currentSetupStep = DBStep_SetupInit;
             BuildPath(
                 Path_SM,
                 s_directory,
                 sizeof(s_directory),
                 SQL_SETUP_DIR);
-            for (gE_currentStep = DBStep_CreateVersionTable; 
-                 gE_currentStep < NUM_SETUP_STEPS; 
-                 gE_currentStep++) {
-                    gH_DBTransaction = new Transaction();
-                    Internal_DirectoryToTransaction(s_directory);
-                    Internal_SendTableTrans(
-                        SQLTxn_OnTablesCreated, 
-                        SQLTxn_FailedToCreateTables,
-                        _,
-                        DBPrio_High);
-                }
-            }
-        case DBVer_NeedsUpdated: {
+            Internal_SendDBTransaction(
+                SQLTxn_OnTablesCreated, 
+                SQLTxn_SetupQueryFailed,
+                _,
+                DBPrio_High);
+        }
+        case DBVer_UpdateRequired: {
             BuildPath(
                 Path_SM,
                 s_directory,
                 sizeof(s_directory),
-                SQL_ALTER_DIR);
-            Internal_DirectoryToTransaction(s_directory);
+                SQL_UPDATE_DIR);
+            
+            Internal_Setup_DirectoryToTransaction(s_directory);
         }
         default:
-            return;
+            QSR_LogMessage(
+                MODULE_NAME,
+                "QUASAR DB UP TO DATE! VERSION %s",
+                gS_dbVersion);
     }
+
 }
 
 // Here we create the query to check the DB version
 void QSR_StartCheckDatabaseVersion() {
     char s_query[512];
     strcopy(s_query, sizeof(s_query),
-        "SELECT `version` \
+        "SELECT `qdb_version` \
          FROM `quasar`.`db_version`;");
 
     QSR_LogQuery(
@@ -190,30 +210,45 @@ QSRDBVersionStatus Internal_IsDatabaseUpToDate() {
         return DBVer_FirstTime;
 
     if (!StrEqual(gS_dbVersion, DATABASE_VERSION))
-        return DBVer_NeedsUpdated;
+        return DBVer_UpdateRequired;
 
     return DBVer_Equal;
 }
 
 void Internal_DropTables() {
+    gH_DBTransaction = new Transaction();
     char s_query[512];
-    for (int i = view_as<int>(NUM_DBTABLES); i > -1; i--) {
+    for (int i = view_as<int>(NUM_DBTABLES)-1; i > -1; i--) {
         FormatEx(
             s_query,
             sizeof(s_query),
             "DROP TABLE IF EXISTS `quasar`.`%s`",
             gS_tableNames[i]);
+
+        if (StrContains(s_query, "SUBSERVER") != -1) {
+            ReplaceString(
+                s_query,
+                sizeof(s_query),
+                "SUBSERVER",
+                gS_subserver,
+                false);
+        }
+        
+        QSR_LogMessage(
+            MODULE_NAME,
+            "%s",
+            s_query);
         gH_DBTransaction.AddQuery(s_query, i);
     }
 
-    Internal_SendTableTrans(
+    Internal_SendDBTransaction(
         SQLTxn_OnTablesErased,
-        SQLTxn_FailedToEraseTables,
+        SQLTxn_SetupQueryFailed,
         _, 
         DBPrio_High);
 }
 
-void Internal_DirectoryToTransaction(const char[] directory) {
+void Internal_Setup_DirectoryToTransaction(const char[] directory) {
     char s_tempPath[256];
     char s_finalPath[256];
     DirectoryListing h_dir = OpenDirectory(directory);
@@ -225,25 +260,14 @@ void Internal_DirectoryToTransaction(const char[] directory) {
             directory);
         return;
     }
-
+    if (gH_DBTransaction == null)
+        gH_DBTransaction = new Transaction();
+    
     while(
         h_dir.GetNext(
             s_tempPath,
             sizeof(s_tempPath),
             h_currentFileType)) {
-        char c_currentStep[3];
-
-        if (gE_currentStep < view_as<QSRDBSetupStep>(10))
-            FormatEx(
-                c_currentStep,
-                sizeof(c_currentStep),
-                "0%d",
-                view_as<int>(gE_currentStep));
-        else
-            IntToString(
-                view_as<int>(gE_currentStep),
-                c_currentStep,
-                sizeof(c_currentStep));
 
         if (StrEqual(s_tempPath, ".") || 
             StrEqual(s_tempPath, "..") ||
@@ -256,15 +280,34 @@ void Internal_DirectoryToTransaction(const char[] directory) {
             "%s/%s",
             directory,
             s_tempPath);
-
-        if (StrContains(s_finalPath, c_currentStep) == -1)
-            continue;
-        
         switch (h_currentFileType) {
-            case FileType_Directory:
-                Internal_DirectoryToTransaction(s_finalPath);
-            case FileType_File:
+            case FileType_Directory: {
+                if (StrContains(s_tempPath, gS_stepNumbers[view_as<int>(gE_currentSetupStep)]) == -1)
+                    continue;
+
+                Internal_Setup_DirectoryToTransaction(s_finalPath);
+            }
+            case FileType_File: {
+                // // If we're not on the current step, we shouldn't be
+                // // adding any files from this directory, as long as
+                // // it's not the main setup directory.
+                // if (StrContains(directory, gS_stepNumbers[view_as<int>(gE_currentSetupStep)]) == -1 &&
+                //     !StrEqual(directory, SQL_SETUP_DIR, false))
+                //     continue;
+                
+                // each sql file is its own step.
+                if (StrEqual(s_tempPath, "01_version_table.sql", false) && 
+                    gE_currentSetupStep != DBStep_CreateVersionTable)
+                    continue;
+                else if (StrEqual(s_tempPath, "06_tf_loadouts.sql", false) && 
+                    gE_currentSetupStep != DBStep_CreateTFLoadoutTable)
+                    continue;
+                else if (StrEqual(s_tempPath, "07_taunt_loadouts.sql", false) && 
+                    gE_currentSetupStep != DBStep_CreateTauntLoadoutTable)
+                    continue;
+
                 Internal_AddSQLFileToTrans(s_finalPath);
+            }
             default:
                 continue;
         }
@@ -281,7 +324,7 @@ void Internal_AddSQLFileToTrans(const char[] sqlFile) {
     }
     File h_sqlFile = OpenFile(sqlFile, "r");
     // This shouldn't happen, but just in case.
-    if (h_sqlFile == null || StrContains(sqlFile, ".sql") == -1) {
+    if (h_sqlFile == null) {
         QSR_LogMessage(
             MODULE_NAME,
             "ERROR! Attempting to open a null sql file: %s",
@@ -298,24 +341,115 @@ void Internal_AddSQLFileToTrans(const char[] sqlFile) {
     }
 
     char s_totalQuery[3256];
-    char s_currentLine[1024];
+    char s_currentLine[196];
     QSRDBTable e_currentTable;
+    bool b_isInsert = false;
+    char s_tableName[64];
     while (h_sqlFile.ReadLine(s_currentLine, sizeof(s_currentLine))) {
-        if (StrContains(s_currentLine, "-- ?") != -1) {
+        if (StrContains(s_currentLine, "-- ?", false) != -1) {
             ReplaceString(s_currentLine,
                           sizeof(s_currentLine),
                           "-- ?",
                           "");
-            e_currentTable = view_as<QSRDBTable>(StringToInt(s_currentLine[4]));
+            e_currentTable = view_as<QSRDBTable>(StringToInt(s_currentLine));
             continue;
         }
 
-        ReplaceString(
-            s_currentLine,
-            sizeof(s_currentLine),
-            "PLREPLACE",
-            gS_subserver);
+        if (StrContains(s_currentLine, "PLREPLACE", false) != -1) {
+            ReplaceString(
+                s_currentLine,
+                sizeof(s_currentLine),
+                "PLREPLACE",
+                gS_subserver,
+                false);
+        }
 
+        // Check if this is an INSERT or REPLACE statement, but NOT a CREATE statement (like CREATE VIEW)
+        if ((StrContains(s_currentLine, "INSERT INTO", false) != -1 ||
+             StrContains(s_currentLine, "REPLACE INTO", false) != -1) &&
+            StrContains(s_currentLine, "CREATE", false) == -1) {
+            b_isInsert = true;
+        }
+
+        if (b_isInsert) {
+            static char s_insertLine[196];
+
+            // If we're on the INSERT / REPLACE line, store it for later.
+            if (StrContains(s_currentLine, "VALUES", false) != -1) {
+                strcopy(
+                    s_insertLine,
+                    sizeof(s_insertLine),
+                    s_currentLine);
+                continue;
+            }
+
+            // First we need to get the table name 
+            strcopy(
+                s_tableName,
+                sizeof(s_tableName),
+                gS_tableNames[view_as<int>(e_currentTable)]);
+
+            // Make sure we replace SUBSERVER with the actual
+            // subserver name if needed.
+            if (StrContains(s_tableName, "SUBSERVER") != -1) {
+                ReplaceString(
+                    s_tableName,
+                    sizeof(s_tableName),
+                    "SUBSERVER",
+                    gS_subserver,
+                    false);
+            }
+
+            // Remove any semicolons at the end of the line
+            if (StrContains(s_currentLine, ";", false) != -1) {
+                ReplaceString(
+                    s_currentLine,
+                    sizeof(s_currentLine),
+                    ";\n",
+                    "",
+                    false);
+            }
+
+            // Gotta remove any commas and new lines for the statement
+            if (StrContains(s_currentLine, "),\n", false) != -1)
+                ReplaceString(
+                    s_currentLine,
+                    sizeof(s_currentLine),
+                    "),\n",
+                    ")",
+                    false);
+            else if (StrContains(s_currentLine, "), ", false) != -1)
+                ReplaceString(
+                    s_currentLine,
+                    sizeof(s_currentLine),
+                    "), ",
+                    ")",
+                    false);
+            else if (StrContains(s_currentLine, "),", false) != -1)
+                ReplaceString(
+                    s_currentLine,
+                    sizeof(s_currentLine),
+                    "),",
+                    ")",
+                    false);
+
+            // Now we can format the full query
+            FormatEx(
+                s_totalQuery,
+                sizeof(s_totalQuery),
+                "%s%s;\n",
+                s_insertLine,
+                s_currentLine);
+
+            DataPack h_queryInfo = new DataPack();
+            h_queryInfo.WriteString(s_totalQuery);
+            h_queryInfo.WriteCell(e_currentTable);
+
+            gH_DBTransaction.AddQuery(s_totalQuery, h_queryInfo);
+            continue;
+        } // End of insert check
+
+        // Send a normal query
         FormatEx(
             s_totalQuery,
             sizeof(s_totalQuery),
@@ -324,23 +458,47 @@ void Internal_AddSQLFileToTrans(const char[] sqlFile) {
             s_currentLine);
     }
 
-    if (gB_logTransactions) {
+    if (gB_logTransactions)
         QSR_SilentLog(
             MODULE_NAME,
-            "Table %d (%s):\n\n%s\n",
+            "Table %d (%s):\n\n%s",
             view_as<int>(e_currentTable),
             gS_tableNames[view_as<int>(e_currentTable)],
             s_totalQuery);
-    }
-    
-    gH_DBTransaction.AddQuery(s_totalQuery, e_currentTable);
+
+    DataPack h_queryInfo = new DataPack();
+    h_queryInfo.WriteString(s_totalQuery);
+    h_queryInfo.WriteCell(e_currentTable);
+
+    gH_DBTransaction.AddQuery(s_totalQuery, h_queryInfo);
     h_sqlFile.Close();
 }
 
-void Internal_SendTableTrans( SQLTxnSuccess success = INVALID_FUNCTION, 
+void Internal_SendDBTransaction( SQLTxnSuccess success = INVALID_FUNCTION, 
                                     SQLTxnFailure fail = INVALID_FUNCTION,
                                     any data = 0,
                                     DBPriority dbPriority = DBPrio_Normal) {
+
+
+    if (gE_currentSetupStep == DBStep_SetupInit) {
+        char s_directory[256];
+        BuildPath(
+            Path_SM,
+            s_directory,
+            sizeof(s_directory),
+            SQL_SETUP_DIR);
+        
+        gE_currentSetupStep++;
+        Internal_Setup_DirectoryToTransaction(s_directory);
+    }
+    
+    QSR_LogMessage(
+        MODULE_NAME,
+        "Current Step: %s %s",
+        gS_stepNumbers[view_as<int>(gE_currentSetupStep)],
+        gS_setupStepNames[view_as<int>(gE_currentSetupStep)]
+    );
+
     gH_db.Execute(
         gH_DBTransaction,
         success,
@@ -464,83 +622,108 @@ void SQLTxn_OnTablesErased(Database db, any data, int numQueries, Handle[] resul
     }
 }
 
-void SQLTxn_FailedToEraseTables(Database db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
-{
-    int tableNum;
-    for (int i=0; i < numQueries; i++) {
-        tableNum = view_as<int>(queryData[i]);
-        if (i < failIndex) {
-            gB_isTableUpdated[tableNum] = true;
-            QSR_LogMessage(
-               MODULE_NAME,
-               "Table erased: %s",
-               gS_tableNames[tableNum]);
-            continue;
-        }
-
-        gB_isTableUpdated[tableNum] = false;
-        QSR_LogMessage(
-           MODULE_NAME,
-           "Unable to erase table: %s",
-           gS_tableNames[tableNum]);
-    } 
-
-    QSR_LogMessage(
-        MODULE_NAME,
-        "UNABLE TO ERASE TABLES!");
-    QSR_LogMessage(
-        MODULE_NAME,
-        "ERROR AT QUERY %d/%d!\n%s",
-        failIndex,
-        numQueries,
-        error);
-    QSR_LogMessage(MODULE_NAME,"");
-}
-
 void SQLTxn_OnTablesCreated(Database db, any data, int numQueries, Handle[] results, QSRDBTable[] queryData)
 {
-    int tableNum;
-    for (int i=0; i < numQueries; i++) {
-        tableNum = view_as<int>(queryData[i]);
-        gB_isTableUpdated[tableNum] = true;
-        QSR_LogMessage(
-            MODULE_NAME,
-            "Table created: %s",
-            gS_tableNames[tableNum]);
+    gE_currentSetupStep++;
+
+    char s_directory[256];
+    BuildPath(
+        Path_SM,
+        s_directory,
+        sizeof(s_directory),
+        SQL_SETUP_DIR);
+    Internal_Setup_DirectoryToTransaction(s_directory);
+
+    if (gE_currentSetupStep >= DBStep_FillMainWithDefaults) {
+        Internal_SendDBTransaction(
+            SQLTxn_OnTablesFilled, 
+            SQLTxn_SetupQueryFailed,
+            _,
+            DBPrio_High);
+        return;
     }
+
+    Internal_SendDBTransaction(
+        SQLTxn_OnTablesCreated, 
+        SQLTxn_SetupQueryFailed,
+        _,
+        DBPrio_High);
 }
 
-void SQLTxn_FailedToCreateTables(Database db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
+void SQLTxn_OnTablesFilled(Database db, any data, int numQueries, Handle[] results, QSRDBTable[] queryData)
 {
-    int tableNum;
-    for (int i=0; i < numQueries; i++) {
-        tableNum = view_as<int>(queryData[i]);
-        if (i < failIndex) {
-            gB_isTableUpdated[tableNum] = true;
-            QSR_LogMessage(
-               MODULE_NAME,
-               "Table created: %s",
-               gS_tableNames[tableNum]);
-            continue;
-        }
-
-        gB_isTableUpdated[tableNum] = false;
+    gE_currentSetupStep++;
+    if (gE_currentSetupStep >= NUM_SETUP_STEPS) {
+        char s_query[512];
+        FormatEx(
+            s_query,
+            sizeof(s_query),
+            "INSERT INTO `quasar`.`db_version` (`qdb_version`) \
+             VALUES ('%s') \
+             ON DUPLICATE KEY UPDATE `qdb_version` = '%s';",
+             DATABASE_VERSION,
+             DATABASE_VERSION);
+        QSR_LogQuery(
+            gH_db,
+            s_query,
+            SQLCB_TableQueryError,
+            _,
+            DBPrio_High);
         QSR_LogMessage(
-           MODULE_NAME,
-           "Unable to create table: %s",
-           gS_tableNames[tableNum]);
-    } 
+            MODULE_NAME,
+            "Database setup complete! Current version: %s",
+            DATABASE_VERSION);
+        return;
+    }
 
+    char s_directory[256];
+    BuildPath(
+        Path_SM,
+        s_directory,
+        sizeof(s_directory),
+        SQL_SETUP_DIR);
+    Internal_Setup_DirectoryToTransaction(s_directory);
+    Internal_SendDBTransaction(
+        SQLTxn_OnTablesFilled, 
+        SQLTxn_SetupQueryFailed,
+        _,
+        DBPrio_High);
+}
+
+void SQLTxn_SetupQueryFailed(Database db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
+{
+    int i_tableNum;
+    char s_failedQuery[3256];
+    QSRDBTable e_tableNumber;
+    
+    // Extract the data from the pack
+    DataPack h_failedQuery = view_as<DataPack>(queryData[failIndex]);
+    h_failedQuery.Reset();
+    h_failedQuery.ReadString(s_failedQuery, sizeof(s_failedQuery));
+    e_tableNumber = view_as<QSRDBTable>(h_failedQuery.ReadCell());
+    h_failedQuery.Close();
+
+    // Change the enum to an int
+    i_tableNum = view_as<int>(e_tableNumber);
     QSR_LogMessage(
         MODULE_NAME,
-        "UNABLE TO GENERATE TABLES!");
+        "TRANSACTION FAILED!"
+    );
     QSR_LogMessage(
         MODULE_NAME,
-        "ERROR AT QUERY %d/%d!\n%s",
+        "TABLE FAILED (%s)",
+        gS_tableNames[i_tableNum]);
+    QSR_LogMessage(
+        MODULE_NAME,
+        "ERROR AT QUERY %d/%d!\n%s\n",
         failIndex+1,
         numQueries,
         error);
-    QSR_LogMessage(MODULE_NAME,"");
+    QSR_LogMessage(
+        MODULE_NAME,
+        "%s",
+        s_failedQuery);
+    QSR_LogMessage(MODULE_NAME,"END OF FAILED QUERY\n");
 }
 
 Action CMD_DB_DropAllTables(int client, int args) {

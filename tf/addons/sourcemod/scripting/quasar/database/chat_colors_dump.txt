@@ -1,0 +1,374 @@
++------------------------+-------------------------+-------+-----------+
+| format                 | name                    | price | category  |
++------------------------+-------------------------+-------+-----------+
+| aliceblue              | Alice Blue              |   100 | Blue      |
+| allies                 | Allies                  |   100 | Green     |
+| ancient                | Ancient                 |   100 | Red       |
+| antiquewhite           | Antique White           |   100 | Greyscale |
+| aqua                   | Aqua                    |   100 | Blue      |
+| aquamarine             | Aquamarine              |   100 | Blue      |
+| arcana                 | Arcana                  |   100 | Green     |
+| axis                   | Axis                    |   100 | Red       |
+| azure                  | Azure                   |   100 | Blue      |
+| beige                  | Beige                   |   100 | Greyscale |
+| bisque                 | Bisque                  |   100 | Brown     |
+| black                  | Black                   |   100 | Greyscale |
+| blanchedalmond         | Blanched Almond         |   100 | Greyscale |
+| blue                   | Blue                    |   100 | Blue      |
+| blueviolet             | Blue Violet             |   100 | Purple    |
+| brown                  | Brown                   |   100 | Brown     |
+| burlywood              | Burly Wood              |   100 | Brown     |
+| cadetblue              | Cadet Blue              |   100 | Blue      |
+| cgablue                | CGA Blue                |     0 | Blue      |
+| cgabrown               | CGA Brown               |     0 | Brown     |
+| cgacyan                | CGA Cyan                |     0 | Blue      |
+| cgadgray               | CGA Dark Gray           |     0 | Greyscale |
+| cgadgrey               | CGA Dark Grey           |     0 | Greyscale |
+| cgagreen               | CGA Green               |     0 | Green     |
+| cgalblue               | CGA Light Blue          |     0 | Blue      |
+| cgalcyan               | CGA Light Cyan          |     0 | Blue      |
+| cgalgray               | CGA Light Gray          |     0 | Greyscale |
+| cgalgreen              | CGA Light Green         |     0 | Green     |
+| cgalgrey               | CGA Light Grey          |     0 | Greyscale |
+| cgalmagenta            | CGA Light Magenta       |     0 | Pink      |
+| cgalred                | CGA Light Red           |     0 | Red       |
+| cgamagenta             | CGA Magenta             |     0 | Pink      |
+| cgared                 | CGA Red                 |     0 | Red       |
+| cgayellow              | CGA Yellow              |     0 | Yellow    |
+| chartreuse             | Charteuse               |   100 | Green     |
+| chocolate              | Chocolate               |   100 | Brown     |
+| collectors             | Collectors              |   100 | Red       |
+| common                 | Common                  |   100 | Greyscale |
+| community              | Community               |   100 | Green     |
+| coral                  | Coral                   |   100 | Orange    |
+| cornflowerblue         | Cornflower Blue         |   100 | Blue      |
+| cornsilk               | Corn Silk               |   100 | Brown     |
+| corrupted              | Corrupted               |   100 | Red       |
+| crimson                | Crimson                 |   100 | Red       |
+| cyan                   | Cyan                    |   100 | Blue      |
+| darkblue               | Dark Blue               |   100 | Blue      |
+| darkcyan               | Dark Cyan               |   100 | Blue      |
+| darkgoldenrod          | Dark Goldenrod          |   100 | Yellow    |
+| darkgray               | Dark Grey               |   100 | Greyscale |
+| darkgreen              | Dark Green              |   100 | Green     |
+| darkkhaki              | Dark Khaki              |   100 | Brown     |
+| darkmagenta            | Dark Magenta            |   100 | Purple    |
+| darkolivegreen         | Dark Olive Green        |   100 | Green     |
+| darkorange             | Dark Orange             |   100 | Orange    |
+| darkorchid             | Dark Orchid             |   100 | Purple    |
+| darkred                | Dark Red                |   100 | Red       |
+| darksalmon             | Dark Salmon             |   100 | Orange    |
+| darkseagreen           | Dark Sea Green          |   100 | Green     |
+| darkslateblue          | Dark Slate Blue         |   100 | Blue      |
+| darkslategray          | Dark Slate Gray         |   100 | Greyscale |
+| darkslategrey          | Dark Slate Grey         |   100 | Greyscale |
+| darkturquoise          | Dark Turquoise          |   100 | Blue      |
+| darkviolet             | Dark Violet             |   100 | Purple    |
+| deeppink               | Deep Pink               |   100 | Pink      |
+| deepskyblue            | Deep Sky Blue           |   100 | Blue      |
+| dimgray                | Dim Gray                |   100 | Greyscale |
+| dimgrey                | Dim Grey                |   100 | Greyscale |
+| dodgerblue             | Dodger Blue             |   100 | Blue      |
+| exalted                | Exalted                 |   100 | Greyscale |
+| firebrick              | Fire Brick              |   100 | Red       |
+| floralwhite            | Floral White            |   100 | Greyscale |
+| forestgreen            | Forest Green            |   100 | Green     |
+| frozen                 | Frozen                  |   100 | Blue      |
+| fullblue               | Full Blue               |   100 | Blue      |
+| fullred                | Full Red                |   100 | Red       |
+| fuschia                | Fuschia                 |   100 | Pink      |
+| gainsboro              | Gainsboro               |   100 | Greyscale |
+| genuine                | Genuine                 |   100 | Green     |
+| ghostwhite             | Ghost White             |   100 | Greyscale |
+| gold                   | Gold                    |   100 | Yellow    |
+| goldenrod              | Goldenrod               |   100 | Yellow    |
+| gray                   | Gray                    |   100 | Greyscale |
+| Green                  | Green                   |   100 | Green     |
+| greenyellow            | Green Yellow            |   100 | Green     |
+| grey                   | Grey                    |   100 | Greyscale |
+| haunted                | Haunted                 |   100 | Green     |
+| honeydew               | Honeydew                |   100 | Green     |
+| hotpink                | Hot Pink                |   100 | Pink      |
+| immortal               | Immortal                |   100 | Yellow    |
+| indianred              | Indian Red              |   100 | Red       |
+| indigo                 | Indigo                  |   100 | Purple    |
+| ivory                  | Ivory                   |   100 | Greyscale |
+| khaki                  | Khaki                   |   100 | Brown     |
+| lavender               | Lavender                |   100 | Purple    |
+| lavenderblush          | Lavender Blush          |   100 | Pink      |
+| lawngreen              | Lawn Green              |   100 | Green     |
+| legendary              | Legendary               |   100 | Purple    |
+| lemonchiffon           | Lemon Chiffon           |   100 | Yellow    |
+| lightblue              | Light Blue              |   100 | Blue      |
+| lightcoral             | Light Coral             |   100 | Pink      |
+| lightcyan              | Light Cyan              |   100 | Blue      |
+| lightgoldenrodyellow   | Light Goldenrod         |   100 | Yellow    |
+| lightgray              | Light Gray              |   100 | Greyscale |
+| lightgreen             | Light Green             |   100 | Green     |
+| lightgrey              | Light Grey              |   100 | Greyscale |
+| lightpink              | Light Pink              |   100 | Pink      |
+| lightsalmon            | Light Salmon            |   100 | Orange    |
+| lightseagreen          | Light Sea Green         |   100 | Blue      |
+| lightskyblue           | Light Sky Blue          |   100 | Blue      |
+| lightslategrey         | Light Slate Grey        |   100 | Greyscale |
+| lightsteelblue         | Light Steel Blue        |   100 | Blue      |
+| lightyellow            | Light Yellow            |   100 | Yellow    |
+| lime                   | Lime                    |   100 | Green     |
+| limegreen              | Lime Green              |   100 | Green     |
+| linen                  | Linen                   |   100 | Brown     |
+| magenta                | Magenta                 |   100 | Pink      |
+| maroon                 | Maroon                  |   100 | Red       |
+| mediumaquamarine       | Medium Aquamarine       |   100 | Blue      |
+| mediumblue             | Medium Blue             |   100 | Blue      |
+| mediumorchid           | Medium Orchid           |   100 | Purple    |
+| mediumpurple           | Medium Purple           |   100 | Purple    |
+| mediumseagreen         | Medium Sea Green        |   100 | Green     |
+| mediumslateblue        | Medium Slate Blue       |   100 | Blue      |
+| mediumspringgreen      | Medium Spring Green     |   100 | Green     |
+| mediumturquoise        | Medium Turquoise        |   100 | Blue      |
+| mediumvioletred        | Medium Violet Red       |   100 | Pink      |
+| midnightblue           | Midnight Blue           |   100 | Blue      |
+| mintcream              | Mint Cream              |   100 | Greyscale |
+| mistyrose              | Misty Rose              |   100 | Pink      |
+| moccasin               | Moccasin                |   100 | Brown     |
+| mythical               | Mythical                |   100 | Purple    |
+| navajowhite            | Navajo White            |   100 | Brown     |
+| navy                   | Navy                    |   100 | Blue      |
+| normal                 | Normal                  |   100 | Greyscale |
+| oldlace                | Old Lace                |   100 | Brown     |
+| olive                  | Olive                   |   100 | Green     |
+| olivedrab              | Olive Drab              |   100 | Green     |
+| Orange                 | Orange                  |   100 | Orange    |
+| orangered              | Orange Red              |   100 | Red       |
+| orchid                 | Orchid                  |   100 | Pink      |
+| palegoldenrod          | Pale Goldenrod          |   100 | Yellow    |
+| palegreen              | Pale Green              |   100 | Green     |
+| paleturquoise          | Pale Turquoise          |   100 | Blue      |
+| palevioletred          | Pale Violet Red         |   100 | Red       |
+| papayawhip             | Papaya Whip             |   100 | Brown     |
+| peachpuff              | Peach Puff              |   100 | Brown     |
+| peru                   | Peru                    |   100 | Brown     |
+| pink                   | Pink                    |   100 | Pink      |
+| plum                   | Plum                    |   100 | Purple    |
+| powderblue             | Powder Blue             |   100 | Blue      |
+| purple                 | Purple                  |   100 | Purple    |
+| ralder                 | R. Alder                |   200 | Purple    |
+| rare                   | Rare                    |   100 | Blue      |
+| rartichoke             | R. Artichoke            |   200 | Green     |
+| rbabyblue              | R. Baby Blue            |   200 | Blue      |
+| rbeige                 | R. Beige                |   200 | Brown     |
+| rblack                 | R. Black                |   200 | Greyscale |
+| rbrickyellow           | R. Brick Yellow         |   200 | Brown     |
+| rbrightblue            | R. Bright Blue          |   200 | Blue      |
+| rbrightbluishgreen     | R. Bright Blue Green    |   200 | Blue      |
+| rbrightbluishviolet    | R. Bright Blue Violet   |   200 | Blue      |
+| rbrightgreen           | R. Bright Green         |   200 | Green     |
+| rbrightorange          | R. Bright Orange        |   200 | Orange    |
+| rbrightpurple          | R. Bright Purple        |   200 | Pink      |
+| rbrightred             | R. Bright Red           |   200 | Red       |
+| rbrightreddishlilac    | R. Bright Red Lilac     |   200 | Purple    |
+| rbrightreddishorange   | R. Bright Red Orange    |   200 | Orange    |
+| rbrightreddishviolet   | R. Bright Red Violet    |   200 | Purple    |
+| rbrightviolet          | R. Bright Violet        |   200 | Purple    |
+| rbrightyellow          | R. Bright Yellow        |   200 | Yellow    |
+| rbrightyellowishgreen  | R. Bright Yellow Green  |   200 | Green     |
+| rbrightyellowishorange | R. Bright Yellow Orange |   200 | Orange    |
+| rbronze                | R. Bronze               |   200 | Brown     |
+| rbrown                 | R. Brown                |   200 | Brown     |
+| rburgundy              | R. Burgundy             |   200 | Brown     |
+| rburlap                | R. Burlap               |   200 | Brown     |
+| rburntsienna           | R. Burnt Sienna         |   200 | Brown     |
+| rbuttermilk            | R. Buttermilk           |   200 | Yellow    |
+| rcadetblue             | R. Cadet Blue           |   200 | Blue      |
+| rcamo                  | R. Camo                 |   200 | Green     |
+| rcarnationpink         | R. Carnation Pink       |   200 | Pink      |
+| rcashmere              | R. Cashmere             |   200 | Brown     |
+| rcloudygrey            | R. Cloudy Grey          |   200 | Greyscale |
+| rcocoa                 | R. Cocoa                |   200 | Brown     |
+| rcoolyellow            | R. Cool Yellow          |   200 | Yellow    |
+| rcopper                | R. Copper               |   200 | Brown     |
+| rcork                  | R. Cork                 |   200 | Brown     |
+| rcrimson               | R. Crimson              |   200 | Red       |
+| rcurry                 | R. Curry                |   200 | Brown     |
+| rcyan                  | R. Cyan                 |   200 | Blue      |
+| rdaisyorange           | R. Daisy Orange         |   200 | Yellow    |
+| rdarkblue              | R. Dark Blue            |   200 | Blue      |
+| rdarkcurry             | R. Dark Curry           |   200 | Brown     |
+| rdarkgreen             | R. Dark Green           |   200 | Green     |
+| rdarkgrey              | R. Dark Grey            |   200 | Greyscale |
+| rdarkindigo            | R. Dark Indigo          |   200 | Purple    |
+| rdarknougat            | R. Dark Nougat          |   200 | Brown     |
+| rdarkorange            | R. Dark Orange          |   200 | Brown     |
+| rdarkred               | R. Dark Red             |   200 | Red       |
+| rdarkroyalblue         | R. Dark Royal Blue      |   200 | Blue      |
+| rdarkstonegrey         | R. Dark Stone Grey      |   200 | Greyscale |
+| rdarktaupe             | R. Dark Taupe           |   200 | Brown     |
+| rdeepblue              | R. Deep Blue            |   200 | Blue      |
+| rdeeporange            | R. Deep Orange          |   200 | Orange    |
+| rdirtbrown             | R. Dirt Brown           |   200 | Brown     |
+| rdoveblue              | R. Dove Blue            |   200 | Blue      |
+| rdustyrose             | R. Dusty Rose           |   200 | Red       |
+| rearthblue             | R. Earth Blue           |   200 | Blue      |
+| rearthgreen            | R. Earth Green          |   200 | Green     |
+| rearthorange           | R. Earth Orange         |   200 | Brown     |
+| rearthyellow           | R. Earth Yellow         |   200 | Brown     |
+| red                    | Red                     |   100 | Red       |
+| reggplant              | R. Eggplant             |   200 | Purple    |
+| relectricblue          | R. Electric Blue        |   200 | Blue      |
+| rfadedgreen            | R. Faded Green          |   200 | Green     |
+| rfawnbrown             | R. Fawn Brown           |   200 | Brown     |
+| rfireyellow            | R. Fire Yellow          |   200 | Yellow    |
+| rflamereddishorange    | R. Flame Red Orange     |   200 | Orange    |
+| rflameyellowishorange  | R. Flame Yellow Orange  |   200 | Orange    |
+| rflint                 | R. Flint                |   200 | Greyscale |
+| rfog                   | R. Fog                  |   200 | Greyscale |
+| rforestgreen           | R. Forest Green         |   200 | Green     |
+| rfossil                | R. Fossil               |   200 | Greyscale |
+| rghostgrey             | R. Ghost Grey           |   200 | Greyscale |
+| rgold                  | R. Gold                 |   200 | Yellow    |
+| rgrey                  | R. Grey                 |   200 | Greyscale |
+| rgrime                 | R. Grime                |   200 | Green     |
+| rgunmetallic           | R. Gun Metallic         |   200 | Greyscale |
+| rhotpink               | R. Hot Pink             |   200 | Pink      |
+| rhurricanegrey         | R. Hurricane Grey       |   200 | Greyscale |
+| rinstitutionalwhite    | R. Institutional White  |   200 | Greyscale |
+| rkhaki                 | R. Khaki                |   200 | Brown     |
+| rlapis                 | R. Lapis                |   200 | Blue      |
+| rlaurelgreen           | R. Laurel Green         |   200 | Green     |
+| rlavender              | R. Lavender             |   200 | Purple    |
+| rlightblue             | R. Light Blue           |   200 | Blue      |
+| rlightbluishgreen      | R. Light Blue Green     |   200 | Blue      |
+| rlightbluishviolet     | R. Light Blue Violet    |   200 | Blue      |
+| rlightbrickyellow      | R. Light Brick Yellow   |   200 | Brown     |
+| rlightgreenmint        | R. Light Mint Green     |   200 | Green     |
+| rlightgrey             | R. Light Grey           |   200 | Greyscale |
+| rlightlilac            | R. Light Lilac          |   200 | Purple    |
+| rlightorange           | R. Light Orange         |   200 | Brown     |
+| rlightorangebrown      | R. Light Orange Brown   |   200 | Brown     |
+| rlightpink             | R. Light Pink           |   200 | Pink      |
+| rlightpurple           | R. Light Purple         |   200 | Pink      |
+| rlightred              | R. Light Red            |   200 | Red       |
+| rlightredviolet        | R. Light Red Violet     |   200 | Purple    |
+| rlightroyalblue        | R. Light Royal Blue     |   200 | Blue      |
+| rlightstonegrey        | R. Light Stone Grey     |   200 | Greyscale |
+| rlightyellow           | R. Light Yellow         |   200 | Yellow    |
+| rlightyellowishgreen   | R. Light Yellow Green   |   200 | Green     |
+| rlightyellowishorange  | R. Light Yellow Orange  |   200 | Brown     |
+| rlilac                 | R. Lilac                |   200 | Purple    |
+| rlilywhite             | R. Lily White           |   200 | Greyscale |
+| rlimegreen             | R. Lime Green           |   200 | Green     |
+| rlinen                 | R. Linen                |   200 | Brown     |
+| rmagenta               | R. Magenta              |   200 | Pink      |
+| rmaroon                | R. Maroon               |   200 | Red       |
+| rmauve                 | R. Mauve                |   200 | Purple    |
+| rmedbluishgreen        | R. Medium Blue Green    |   200 | Blue      |
+| rmedgreen              | R. Medium Green         |   200 | Green     |
+| rmediumblue            | R. Medium Blue          |   200 | Blue      |
+| rmediumbluishviolet    | R. Medium Blue Violet   |   200 | Blue      |
+| rmediumlilac           | R. Medium Lilac         |   200 | Purple    |
+| rmediumorange          | R. Medium Orange        |   200 | Orange    |
+| rmediumred             | R. Medium Red           |   200 | Red       |
+| rmediumroyalblue       | R. Medium Royal Blue    |   200 | Blue      |
+| rmediumstonegrey       | R. Medium Stone Grey    |   200 | Greyscale |
+| rmedredviolet          | R. Medium Red Violet    |   200 | Purple    |
+| rmedyellowishgreen     | R. Medium Yellow Green  |   200 | Green     |
+| rmedyellowishorange    | R. Medium Yellow Orange |   200 | Orange    |
+| rmidgrey               | R. Mid Grey             |   200 | Greyscale |
+| rmint                  | R. Mint                 |   200 | Green     |
+| rmoss                  | R. Moss                 |   200 | Green     |
+| rmulberry              | R. Mulberry             |   200 | Purple    |
+| rnavyblue              | R. Navy Blue            |   200 | Blue      |
+| rneonorange            | R. Neon Orange          |   200 | Orange    |
+| rnewyeller             | R. New Yeller           |   200 | Yellow    |
+| rnougat                | R. Nougat               |   200 | Brown     |
+| rolive                 | R. Olive                |   200 | Green     |
+| rolivine               | R. Olivine              |   200 | Green     |
+| rosybrown              | Rosy Brown              |   100 | Brown     |
+| royalblue              | Royal Blue              |   100 | Blue      |
+| royster                | R. Oyster               |   200 | Greyscale |
+| rparsleygreen          | R. Parsley Green        |   200 | Green     |
+| rpastelblue            | R. Pastel Blue          |   200 | Blue      |
+| rpastelbluegreen       | R. Pastel Blue Green    |   200 | Blue      |
+| rpastelbrown           | R. Pastel Brown         |   200 | Brown     |
+| rpastelgreen           | R. Pastel Green         |   200 | Green     |
+| rpastellightblue       | R. Pastel Light Blue    |   200 | Blue      |
+| rpastelorange          | R. Pastel Orange        |   200 | Orange    |
+| rpastelviolet          | R. Pastel Violet        |   200 | Purple    |
+| rpastelyellow          | R. Pastel Yellow        |   200 | Yellow    |
+| rpearl                 | R. Pearl                |   200 | Greyscale |
+| rpersimmon             | R. Persimmon            |   200 | Orange    |
+| rpinecone              | R. Pinecone             |   200 | Brown     |
+| rplum                  | R. Plum                 |   200 | Purple    |
+| rposphwhite            | R. Posph. White         |   200 | Greyscale |
+| rquillgrey             | R. Quill Grey           |   200 | Greyscale |
+| rreallyblack           | R. Really Black         |   200 | Greyscale |
+| rreallyblue            | R. Really Blue          |   200 | Blue      |
+| rreallyred             | R. Really Red           |   200 | Red       |
+| rreddishbrown          | R. Reddish Brown        |   200 | Brown     |
+| rreddishlilac          | R. Red Lilac            |   200 | Purple    |
+| rroyalblue             | R. Royal Blue           |   200 | Blue      |
+| rroyalpurple           | R. Royal Purple         |   200 | Purple    |
+| rrust                  | R. Rust                 |   200 | Brown     |
+| rsagegreen             | R. Sage Green           |   200 | Green     |
+| rsalmon                | R. Salmon               |   200 | Pink      |
+| rsandblue              | R. Sand Blue            |   200 | Blue      |
+| rsandgreen             | R. Sand Green           |   200 | Green     |
+| rsandred               | R. Sand Red             |   200 | Red       |
+| rsandviolet            | R. Sand Violet          |   200 | Purple    |
+| rseagreen              | R. Sea Green            |   200 | Green     |
+| rseashell              | R. Sea Shell            |   200 | Pink      |
+| rshamrock              | R. Shamrock             |   200 | Green     |
+| rsilver                | R. Silver               |   200 | Greyscale |
+| rslimegreen            | R. Slime Green          |   200 | Green     |
+| rsmokygrey             | R. Smoky Grey           |   200 | Greyscale |
+| rsteelblue             | R. Steel Blue           |   200 | Blue      |
+| rstormblue             | R. Storm Blue           |   200 | Blue      |
+| rsunrise               | R. Sunrise              |   200 | Purple    |
+| rtawny                 | R. Tawny                |   200 | Brown     |
+| rteal                  | R. Teal                 |   200 | Blue      |
+| rterracotta            | R. Terra Cotta          |   200 | Brown     |
+| rtoothpaste            | R. Toothpaste           |   200 | Blue      |
+| rtrblue                | R. TBlue                |   200 | Blue      |
+| rtrbrightbluishviolet  | R. Tr. BBlue Violet     |   200 | Blue      |
+| rtrgreen               | R. TGreen               |   200 | Green     |
+| rtrlgblue              | R. Light TBlue          |   200 | Blue      |
+| rtrlilac               | R. Tr. Lilac            |   200 | Purple    |
+| rtrmedireddishviolet   | R. Med TRed Violet      |   200 | Pink      |
+| rtrred                 | R. TRed                 |   200 | Red       |
+| rtryellow              | R. TYellow              |   200 | Yellow    |
+| rturquoise             | R. Turquoise            |   200 | Blue      |
+| rwarmyellowishorange   | R. Warm Yellow Orange   |   200 | Brown     |
+| rwheat                 | R. Wheat                |   200 | Brown     |
+| rwhite                 | R. White                |   200 | Greyscale |
+| saddlebrown            | Saddle Brown            |   100 | Brown     |
+| salmon                 | Salmon                  |   100 | Orange    |
+| sandybrown             | Sandy Brown             |   100 | Brown     |
+| seagreen               | Sea Green               |   100 | Green     |
+| seashell               | Seashell                |   100 | Greyscale |
+| selfmade               | Selfmade                |   100 | Green     |
+| sienna                 | Sienna                  |   100 | Brown     |
+| silver                 | Silver                  |   100 | Greyscale |
+| skyblue                | Sky Blue                |   100 | Blue      |
+| slateblue              | Slate Blue              |   100 | Blue      |
+| slategrey              | Slate Grey              |   100 | Greyscale |
+| snow                   | Snow                    |   100 | Greyscale |
+| springgreen            | Spring Green            |   100 | Green     |
+| steelblue              | Steel Blue              |   100 | Blue      |
+| strange                | Strange                 |   100 | Orange    |
+| tan                    | Tan                     |   100 | Brown     |
+| teal                   | Teal                    |   100 | Blue      |
+| thistle                | Thistle                 |   100 | Purple    |
+| tomato                 | Tomato                  |   100 | Red       |
+| turquoise              | Turquoise               |   100 | Blue      |
+| uncommon               | Uncommon                |   100 | Greyscale |
+| unique                 | Unique                  |   100 | Yellow    |
+| unusual                | Unusual                 |   100 | Purple    |
+| valve                  | Valve                   |   100 | Purple    |
+| vintage                | Vintage                 |   100 | Blue      |
+| violet                 | Violet                  |   100 | Pink      |
+| wheat                  | Wheat                   |   100 | Brown     |
+| white                  | White                   |   100 | Greyscale |
+| whitesmoke             | White Smoke             |   100 | Greyscale |
+| yellow                 | Yellow                  |   100 | Yellow    |
+| yellowgreen            | Yellow Green            |   100 | Yellow    |
++------------------------+-------------------------+-------+-----------+

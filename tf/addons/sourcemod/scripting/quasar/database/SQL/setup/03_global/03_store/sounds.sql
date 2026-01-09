@@ -8,16 +8,13 @@ CREATE TABLE IF NOT EXISTS `quasar`.`sounds` (
     `price` INT NOT NULL DEFAULT 0,
     `activation_phrase` VARCHAR(32) NOT NULL DEFAULT 'UNKNOWN',
     `creator_id` VARCHAR(64) NOT NULL DEFAULT 'QUASAR',
-    PRIMARY KEY (
-        `id`,
-        `item_id`,
-        `name`,
-        `filepath`,
-        `activation_phrase`
-    ),
-    UNIQUE INDEX `idx_sound_id`   (`id` ASC),
-    INDEX `idx_sound_name` (`name` ASC),
-    INDEX `idx_sound_item_id` (`item_id` ASC),
-    INDEX `idx_sound_activation_phrase` (`activation_phrase` ASC),
-    INDEX `idx_sound_filepath` (`filepath`  ASC)
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `idx_sound_id` (`id` ASC),
+    UNIQUE INDEX `idx_sound_name` (`name` ASC),
+    UNIQUE INDEX `idx_sound_item_id` (`item_id` ASC),
+    UNIQUE INDEX `idx_sound_activation_phrase` (`activation_phrase` ASC),
+    UNIQUE INDEX `idx_sound_filepath` (`filepath` ASC),
+    INDEX `idx_sound_cooldown` (`cooldown` ASC),
+    INDEX `idx_sound_price` (`price` ASC),
+    INDEX `idx_sound_creator_id` (`creator_id` ASC)
 );

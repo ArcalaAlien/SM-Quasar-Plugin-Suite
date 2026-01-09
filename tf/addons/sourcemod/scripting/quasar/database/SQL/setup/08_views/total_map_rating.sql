@@ -15,7 +15,7 @@ FROM (
         ON m.name = pmr.map_name
     GROUP BY m.name
 ) AS vt
-INNER JOIN PLREPLACE_maps_ratings AS srv_pm
+INNER JOIN `quasar`.`PLREPLACE_maps_ratings` AS srv_pm
     ON vt.name = srv_pm.map_name
 GROUP BY vt.name, vt.total_votes
 ORDER BY rating DESC;

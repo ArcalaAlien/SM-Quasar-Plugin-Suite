@@ -209,7 +209,7 @@ public void QSR_OnCreditsChanged(int userid, int amtGiven, int oldTotal, int new
         UPDATE `str_playersbank` \
         SET `credits`=`credits`+'%d' \
         WHERE `steam_id`='%s'", amtGiven, s_steam64ID);
-        QSR_LogQuery(gH_logFile, gH_db, s_query, SQLCB_DefaultCallback);
+        QSR_LogQuery(gH_db, s_query, SQLCB_DefaultCallback);
 
         if (amtGiven >= 0)
         {

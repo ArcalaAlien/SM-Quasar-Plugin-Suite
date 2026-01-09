@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS `quasar`.`quasar_loadouts` (
     `id` INT NOT NULL AUTO_INCREMENT,
     `steam64_id` VARCHAR(64) NOT NULL DEFAULT 'UNKNOWN',
-    `loadout_id` INT NOT NULL DEFAULT 0,
+    `loadout_id` INT NOT NULL DEFAULT 1,
     `trail_id` VARCHAR(64) NOT NULL DEFAULT 'UNKNOWN',
     `trail_color_r` INT NOT NULL DEFAULT 255,
     `trail_color_g` INT NOT NULL DEFAULT 255,
@@ -18,12 +18,9 @@ CREATE TABLE IF NOT EXISTS `quasar`.`quasar_loadouts` (
     `tag_id` VARCHAR(64) NOT NULL DEFAULT 'UNKNOWN',
     `name_color` VARCHAR(64) NOT NULL DEFAULT 'NONE',
     `chat_color` VARCHAR(64) NOT NULL DEFAULT 'NONE',
-    PRIMARY KEY (
-        `id`,
-        `steam64_id`,
-        `loadout_id`
-    ),
+    PRIMARY KEY (`id`),
     UNIQUE INDEX `idx_quasar_loadouts_id` (`id` ASC),
+    UNIQUE INDEX `idx_quasar_loadouts_steam64_loadout` (`steam64_id` ASC, `loadout_id` ASC),
     INDEX `idx_quasar_loadouts_steam64_id` (`steam64_id` ASC),
     INDEX `idx_quasar_loadouts_loadout_id` (`loadout_id` ASC),
     INDEX `idx_quasar_loadouts_trail_id` (`trail_id` ASC),
