@@ -206,7 +206,10 @@ forward void QSR_OnSystemSoundsRetrieved(StringMap sounds);
  */
 stock int QSR_IsValidClient(int client)
 {
-    if (client && IsClientInGame(client) && !IsFakeClient(client)) { return GetClientUserId(client); }
+    if (client && 
+        IsClientInGame(client) && 
+        !IsFakeClient(client)) 
+        return GetClientUserId(client);
 
     return 0;
 }
@@ -219,7 +222,11 @@ stock int QSR_IsValidClient(int client)
  */
 stock int QSR_IsValidClientEX(int client)
 {
-    if (client && IsClientInGame(client) && !IsFakeClient(client) && IsPlayerAlive(GetClientUserId(client))) { return GetClientUserId(client); }
+    int i_userid = QSR_IsValidClient(client);
+
+    if (i_userid &&
+        IsPlayerAlive(i_userid))
+        return i_userid;
 
     return 0;
 }

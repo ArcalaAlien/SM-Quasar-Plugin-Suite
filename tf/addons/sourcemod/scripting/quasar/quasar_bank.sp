@@ -86,7 +86,7 @@ public void OnPluginStart()
     RegConsoleCmd("sm_giveto",      CMD_DonateCredits,  "Donate an amount of your credits to another player!");
     RegConsoleCmd("sm_drop",        CMD_DropCredits,    "Drop an amount of credits as a pickup for other players to get!");
     RegConsoleCmd("sm_dropc",       CMD_DropCredits,    "Drop an amount of credits as a pickup for other players to get!");
-    RegConsoleCmd("sm_upgrade",     CMD_UpgradeTest,    "Upgrade shit");
+    // RegConsoleCmd("sm_upgrade",     CMD_UpgradeTest,    "Upgrade shit");
 
     RegConsoleCmd("sm_balance", CMD_GetCredits, "Use this to check how many credits you have!")
     RegConsoleCmd("sm_credit",  CMD_GetCredits, "Use this to check how many credits you have!");
@@ -206,9 +206,9 @@ public void QSR_OnCreditsChanged(int userid, int amtGiven, int oldTotal, int new
     if (gH_db != null)
     {
         FormatEx(s_query, sizeof(s_query), "\
-        UPDATE `str_playersbank` \
+        UPDATE `quasar`.`players` \
         SET `credits`=`credits`+'%d' \
-        WHERE `steam_id`='%s'", amtGiven, s_steam64ID);
+        WHERE `steam64_id`='%s'", amtGiven, s_steam64ID);
         QSR_LogQuery(gH_db, s_query, SQLCB_DefaultCallback);
 
         if (amtGiven >= 0)
@@ -776,12 +776,12 @@ Action CMD_DonateCredits(int client, int args)
     int i_userid = GetClientUserId(client);
     int i_credits = QSR_GetPlayerCredits(i_userid);
 
-    if (!QSR_CheckForUpgrade(i_userid, QSRUpgrade_DropCredits))
-    {
-        QSR_NotifyUser(i_userid, gST_sounds.s_errorSound, "%T", "QSR_NeedDonateUpgrade", client,
-        gST_chatFormatting.s_errorColor, gST_chatFormatting.s_commandColor);
-        return Plugin_Handled;
-    }
+    // if (!QSR_CheckForUpgrade(i_userid, QSRUpgrade_DropCredits))
+    // {
+    //     QSR_NotifyUser(i_userid, gST_sounds.s_errorSound, "%T", "QSR_NeedDonateUpgrade", client,
+    //     gST_chatFormatting.s_errorColor, gST_chatFormatting.s_commandColor);
+    //     return Plugin_Handled;
+    // }
 
     if (i_credits <= 0)
     {
@@ -972,15 +972,15 @@ Action CMD_DonateCredits(int client, int args)
     return Plugin_Handled;
 }
 
-Action CMD_UpgradeTest(int client, int args)
-{
-    int userid = GetClientUserId(client);
-    if (!QSR_IsValidClient(client) || !QSR_IsPlayerFetched(userid) || !client) { return Plugin_Handled; }
+// Action CMD_UpgradeTest(int client, int args)
+// {
+//     int userid = GetClientUserId(client);
+//     if (!QSR_IsValidClient(client) || !QSR_IsPlayerFetched(userid) || !client) { return Plugin_Handled; }
 
-    QSR_AddUpgrade(userid, QSRUpgrade_DonateCredits);
-    QSR_AddUpgrade(userid, QSRUpgrade_DropCredits);
-    return Plugin_Handled;
-}
+//     QSR_AddUpgrade(userid, QSRUpgrade_DonateCredits);
+//     QSR_AddUpgrade(userid, QSRUpgrade_DropCredits);
+//     return Plugin_Handled;
+// }
 
 //** sm_drop (amount) */
 Action CMD_DropCredits(int client, int args)
@@ -990,12 +990,12 @@ Action CMD_DropCredits(int client, int args)
     int i_userid = GetClientUserId(client);
     int i_credits = QSR_GetPlayerCredits(i_userid);
 
-    if (!QSR_CheckForUpgrade(i_userid, QSRUpgrade_DropCredits))
-    {
-        QSR_NotifyUser(i_userid, gST_sounds.s_errorSound, "%T", "QSR_NeedDropUpgrade", client,
-        gST_chatFormatting.s_errorColor, gST_chatFormatting.s_commandColor);
-        return Plugin_Handled;
-    }
+    // if (!QSR_CheckForUpgrade(i_userid, QSRUpgrade_DropCredits))
+    // {
+    //     QSR_NotifyUser(i_userid, gST_sounds.s_errorSound, "%T", "QSR_NeedDropUpgrade", client,
+    //     gST_chatFormatting.s_errorColor, gST_chatFormatting.s_commandColor);
+    //     return Plugin_Handled;
+    // }
 
     if (i_credits <= 0)
     {

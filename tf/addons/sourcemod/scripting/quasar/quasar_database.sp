@@ -140,14 +140,6 @@ public void OnConfigsExecuted()
     Database.Connect(SQLCB_OnConnect, gS_dbProfile);
 }
 
-public void OnMapStart() {
-
-}
-
-public void OnMapEnd() {
-
-}
-
 void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
     if (convar == gH_CVR_dbLogTrans)
@@ -175,13 +167,23 @@ public void QSR_OnDBVersionRetrieved(const char[] dbVersion)
                 DBPrio_High);
         }
         case DBVer_UpdateRequired: {
-            BuildPath(
-                Path_SM,
-                s_directory,
-                sizeof(s_directory),
-                SQL_UPDATE_DIR);
+            if (gH_DBTransaction != null)
+                gH_DBTransaction.Close();
+
+            // Before we can dump the tables to preserve data,
+            // we have to get the column information for each table
+            // because columns are not stored in any particular order.
+            gH_DBTransaction = new Transaction();
+            for (QSRDBTable i = DBTable_TFClasses;
+                 i < NUM_DBTABLES;
+                 i++)
+                Internal_AddTableToInfoTransaction(i);
             
-            Internal_Setup_DirectoryToTransaction(s_directory);
+            Internal_SendDBTransaction(
+                SQLTxn_OnColumnInfoFetched,
+                SQLTxn_FailedToFetchColumnInfo,
+                _,
+                DBPrio_High);
         }
         default:
             QSR_LogMessage(
@@ -218,7 +220,9 @@ QSRDBVersionStatus Internal_IsDatabaseUpToDate() {
 void Internal_DropTables() {
     gH_DBTransaction = new Transaction();
     char s_query[512];
-    for (int i = view_as<int>(NUM_DBTABLES)-1; i > -1; i--) {
+    for (int i = view_as<int>(NUM_DBTABLES)-1; 
+         i > view_as<int>(DBTable_Version);
+         i--) {
         FormatEx(
             s_query,
             sizeof(s_query),
@@ -291,9 +295,9 @@ void Internal_Setup_DirectoryToTransaction(const char[] directory) {
                 // // If we're not on the current step, we shouldn't be
                 // // adding any files from this directory, as long as
                 // // it's not the main setup directory.
-                // if (StrContains(directory, gS_stepNumbers[view_as<int>(gE_currentSetupStep)]) == -1 &&
-                //     !StrEqual(directory, SQL_SETUP_DIR, false))
-                //     continue;
+                if (StrContains(directory, gS_stepNumbers[view_as<int>(gE_currentSetupStep)]) == -1 &&
+                    !StrEqual(directory, SQL_SETUP_DIR, false))
+                    continue;
                 
                 // each sql file is its own step.
                 if (StrEqual(s_tempPath, "01_version_table.sql", false) && 
@@ -508,6 +512,133 @@ void Internal_SendDBTransaction( SQLTxnSuccess success = INVALID_FUNCTION,
     gH_DBTransaction = null;
 }
 
+// This will automatically replace the subserver
+// placeholder in the table name with the current subserver name
+bool Internal_GetTableName(QSRDBTable e_table, char[] s_tableName, int maxlength) {
+    if (e_table < DBTable_Version ||
+        e_table >= NUM_DBTABLES)
+        return false;
+
+    char s_temp[64];
+    strcopy(s_temp, 
+            sizeof(s_temp), 
+            gS_tableNames[view_as<int>(e_table)]);
+    ReplaceString(s_temp, 
+                  sizeof(s_temp),
+                  "SUBSERVER", 
+                  gS_subserver, 
+                  false);
+    strcopy(
+        s_tableName, 
+        maxlength, 
+        s_temp);
+    return true;
+}
+
+QSRDBTable Internal_GetTableFromName(const char[] s_tableName) {
+    for (int i = 0; i < view_as<int>(NUM_DBTABLES); i++)
+        if (StrEqual(gS_tableNames[i], s_tableName))
+            return view_as<QSRDBTable>(i);
+
+    return view_as<QSRDBTable>(-1);
+}
+
+void Internal_AddTableToInfoTransaction(QSRDBTable e_table)
+{
+    char s_query[512],
+         s_tableName[64];
+
+    Internal_GetTableName(e_table,
+                          s_tableName,
+                          sizeof(s_tableName));
+
+    ReplaceString(s_tableName,
+                  sizeof(s_tableName),
+                  "SUBSERVER",
+                  gS_subserver,
+                  false);
+
+    FormatEx(s_query,
+             sizeof(s_query),
+             "SELECT `column_name`, `data_type` \
+             FROM INFORMATION_SCHEMA.COLUMNS \
+             WHERE `table_name` = '%s';",
+             s_tableName);
+
+    if (gB_logTransactions)
+        QSR_SilentLog(
+            MODULE_NAME,
+            "Table %d (%s):\n\n%s",
+            view_as<int>(e_table),
+            gS_tableNames[view_as<int>(e_table)],
+            s_query);
+
+    gH_DBTransaction.AddQuery(s_query, e_table);
+}
+
+bool Internal_CreateSelectQueryForUnknownColumns(char[] query, int maxlength, ArrayList columnList) {
+    char s_tableName[64],
+         s_columnName[64];
+
+    strcopy (query,
+             maxlength,
+             "SELECT ");
+
+    StringMap h_columnInfo;
+    for (int i; i < columnList.Length; i++) {
+        h_columnInfo = columnList.Get(i);
+
+        if (h_columnInfo == null)
+            return false;
+
+        h_columnInfo.GetString(SQL_TABLE_NAME_KEY, s_tableName, sizeof(s_tableName));
+        h_columnInfo.GetString(SQL_COLUMN_NAME_KEY, s_columnName, sizeof(s_columnName));
+
+        FormatEx(s_columnName,
+                sizeof(s_columnName),
+                "`%s`",
+                s_columnName);
+        if (i < columnList.Length - 1)
+            StrCat(s_columnName, 
+                   sizeof(s_columnName),
+                   ", ");
+        StrCat(query,
+               maxlength,
+               s_columnName);
+    }
+    
+    char s_temp[128];
+    FormatEx(s_temp,
+             sizeof(s_temp),
+             "FROM `%s`;",
+             s_tableName);
+    StrCat(query,
+           maxlength,
+           s_temp);
+    return true;
+}
+
+void Internal_GetColumnDataType(const char[] s_dataType, QSRDBColDataType &e_dataType) {
+    if (StrEqual(s_dataType, "INT", false) ||
+        StrEqual(s_dataType, "INTEGER", false) ||
+        StrEqual(s_dataType, "BIGINT", false) ||
+        StrEqual(s_dataType, "MEDIUMINT", false) ||
+        StrEqual(s_dataType, "SMALLINT", false) ||
+        StrEqual(s_dataType, "TINYINT", false))
+        e_dataType = DBColType_Int;
+    else if (StrEqual(s_dataType, "FLOAT", false) ||
+             StrEqual(s_dataType, "DOUBLE", false) ||
+             StrEqual(s_dataType, "DECIMAL", false) ||
+             StrEqual(s_dataType, "NUMERIC", false))
+        e_dataType = DBColType_Float;
+    else if (StrEqual(s_dataType, "CHAR", false) ||
+             StrEqual(s_dataType, "VARCHAR", false) ||
+             StrEqual(s_dataType, "TEXT", false))
+        e_dataType = DBColType_String;
+    else
+        e_dataType = DBColType_Bool;
+}
+
 /**
  *  Refreshes the connection to the database.
  *  Usefull if cvars change before the map does.
@@ -557,6 +688,7 @@ void SQLCB_OnConnect(Database db, const char[] error, any data)
     // Make sure we actually SET the database handle. :eyeroll:
     gH_db = db;
     gB_dbConnected = true;
+
 
     Call_StartForward(gH_FWD_dbConnected);
     Call_PushCellRef(gH_db);
@@ -609,7 +741,276 @@ void SQLCB_TableQueryError(Database db, DBResultSet results, const char[] error,
     }
 }
 
-void SQLTxn_OnTablesErased(Database db, any data, int numQueries, Handle[] results, QSRDBTable[] queryData)
+void SQLTxn_OnColumnInfoFetched(Database db, any data, int numQueries, DBResultSet[] results, QSRDBTable[] queryData)
+{
+    char s_tableName[64],
+         s_columnName[64],
+         s_dataType[64],
+         s_temp[64],
+         s_query[1024];
+
+    if (gH_DBTransaction != null)
+        gH_DBTransaction.Close(); 
+    gH_DBTransaction = new Transaction();
+
+    int i_currentColumn = 0;
+    for (int i; i < numQueries; i++) {
+        Internal_GetTableName(queryData[i],
+                              s_tableName,
+                              sizeof(s_tableName));
+        FormatEx(s_temp,
+                 sizeof(s_temp),
+                 "%s_%d",
+                 SQL_TABLE_NAME_KEY,
+                 i);
+
+        ArrayList h_tableColumnList = new ArrayList();
+        while (results[i].FetchRow()) {
+            results[i].FetchString(0,
+                    s_columnName,
+                    sizeof(s_columnName));
+            results[i].FetchString(1,
+                    s_dataType,
+                    sizeof(s_dataType));
+
+            StringMap h_columnInfo = new StringMap();
+            FormatEx(s_temp,
+                     sizeof(s_temp),
+                     "%s_%d",
+                     SQL_COLUMN_NAME_KEY,
+                     i_currentColumn); 
+            h_columnInfo.SetString(s_temp, s_columnName);
+
+            FormatEx(s_temp,
+                     sizeof(s_temp),
+                     "%s_%d",
+                     SQL_COLUMN_DATA_TYPE_KEY,
+                     i_currentColumn);
+            h_columnInfo.SetString(s_temp, s_dataType);
+            h_tableColumnList.Push(h_columnInfo);
+        }
+
+        Internal_CreateSelectQueryForUnknownColumns(s_query, sizeof(s_query), h_tableColumnList);
+        if (gB_logTransactions)
+            QSR_SilentLog(MODULE_NAME,
+                          "Select Query: %s",
+                          s_query);
+
+        gH_DBTransaction.AddQuery(s_query, h_tableColumnList);
+    }
+
+    Internal_SendDBTransaction(
+        SQLTxn_OnTableFetchedForDump, 
+        SQLTxn_OnFailedToFetchTableForDump,
+        _,
+        DBPrio_High);
+}
+
+void SQLTxn_FailedToFetchColumnInfo(Database db, any data, int numQueries, const char[] error, int failIndex, QSRDBTable[] queryData)
+{
+    QSR_ThrowError(
+        MODULE_NAME,
+        "COULD NOT FETCH COLUMN INFO FOR TABLES!\nERROR AT QUERY %d/%d!\nTable: %s\nERROR: %s\n",
+        failIndex+1,
+        numQueries,
+        gS_tableNames[view_as<int>(queryData[failIndex])],
+        error);
+}
+
+void SQLTxn_OnTableFetchedForDump(Database db, any data, int numQueries, DBResultSet[] results, ArrayList[] columnList)
+{
+    char s_tableName[64],
+         s_columnName[64],
+         s_dataType[64],
+         s_temp[64],
+         s_query[MAX_QUERY_LENGTH];
+    QSRDBColDataType e_dataType;
+    QSRDBTable e_currentTable;
+
+    for (int i; i < numQueries; i++) {
+        File h_sqlDumpFile = null;
+        while (results[i].FetchRow()) {
+            StringMap h_tempStringMap = columnList[i].Get(0);
+            FormatEx(s_temp,
+                    sizeof(s_temp),
+                    "%s_%d",
+                    SQL_TABLE_NAME_KEY,
+                    i);
+            h_tempStringMap.GetString(s_temp,
+                                    s_tableName, 
+                                    sizeof(s_tableName));
+            h_tempStringMap.Close();
+            e_currentTable = Internal_GetTableFromName(s_tableName);
+
+            if (h_sqlDumpFile == null) {
+                FormatEx(s_temp,
+                        sizeof(s_temp),
+                        "quasar_%s_dump.sql",
+                        s_tableName);
+                h_sqlDumpFile = OpenFile(s_temp, "w");
+            }
+
+            FormatEx(s_query,
+                    sizeof(s_query),
+                    "-- ?%d\nINSERT INTO `quasar`.`%s` (",
+                    view_as<int>(e_currentTable),
+                    s_tableName);
+            
+            StringMap h_columnValues = new StringMap();
+            char s_columnKey[196];
+            for (int j; j < columnList[i].Length; j++) {
+                FormatEx(s_columnKey,
+                        sizeof(s_columnKey),
+                        "%s_column_%d",
+                        s_tableName,
+                        j);
+
+                StringMap h_columnInfo = view_as<StringMap>(columnList[i].Get(j));
+                FormatEx(s_temp,
+                        sizeof(s_temp),
+                        "%s_%d",
+                        SQL_COLUMN_NAME_KEY,
+                        i);
+                h_columnInfo.GetString(s_temp, 
+                                    s_columnName, 
+                                    sizeof(s_columnName));
+
+                FormatEx(s_query,
+                        sizeof(s_query),
+                        "%s`%s`",
+                        s_query,
+                        s_columnName);
+
+                bool b_endOfList = (j == columnList[i].Length - 1);
+                if (!b_endOfList)
+                    FormatEx(s_query,
+                            sizeof(s_query),
+                            "%s, ",
+                            s_query);
+                else
+                    FormatEx(s_query,
+                            sizeof(s_query),
+                            "%s) VALUES\n(",
+                            s_query);
+
+                FormatEx(s_temp,
+                        sizeof(s_temp),
+                        "%s_%d",
+                        SQL_COLUMN_DATA_TYPE_KEY,
+                        i);
+                h_columnInfo.GetString(SQL_COLUMN_DATA_TYPE_KEY, s_dataType, sizeof(s_dataType));
+                Internal_GetColumnDataType(s_dataType, e_dataType);
+
+                switch(e_dataType) {
+                    case DBColType_Bool: {
+                        char s_value[16];
+                        results[i].FetchString(j,
+                                                s_value,
+                                                sizeof(s_value));
+                        if (!b_endOfList)
+                            FormatEx(s_query,
+                                 sizeof(s_query),
+                                 "%s'%s', ",
+                                 s_query,
+                                 s_value);
+                        else
+                            FormatEx(s_query,
+                                     sizeof(s_query),
+                                     "%s'%s');",
+                                     s_query,
+                                     s_value);
+                    }
+                    case DBColType_Int: {
+                        int i_value = results[i].FetchInt(j);
+                        h_columnValues.SetValue(s_columnKey, i_value);
+
+                        if (!b_endOfList)
+                            FormatEx(s_query,
+                                 sizeof(s_query),
+                                 "%s%d, ",
+                                 s_query,
+                                 i_value);
+                        else
+                            FormatEx(s_query,
+                                     sizeof(s_query),
+                                     "%s%d);",
+                                     s_query,
+                                     i_value);
+                    }
+                    case DBColType_Float: {
+                        float f_value = results[i].FetchFloat(j);
+                        h_columnValues.SetValue(s_columnKey, f_value);
+
+                        if (!b_endOfList)
+                            FormatEx(s_query,
+                                 sizeof(s_query),
+                                 "%s%f, ",
+                                 s_query,
+                                 f_value);
+                        else
+                            FormatEx(s_query,
+                                     sizeof(s_query),
+                                     "%s%f)",
+                                     s_query,
+                                     f_value);
+                    }
+                    case DBColType_String: {
+                        char s_value[256];
+                        results[i].FetchString(j, s_value, sizeof(s_value));
+                        h_columnValues.SetString(s_columnKey, s_value);
+
+                        if (!b_endOfList)
+                            FormatEx(s_query,
+                                 sizeof(s_query),
+                                 "%s'%s', ",
+                                 s_query,
+                                 s_value);
+                        else
+                            FormatEx(s_query,
+                                     sizeof(s_query),
+                                     "%s'%s'),\n",
+                                     s_query,
+                                     s_value);
+                    }
+                    default: {
+                        QSR_ThrowError(
+                            MODULE_NAME,
+                            "UNKNOWN DATA TYPE ENCOUNTERED FOR COLUMN: `%s` IN TABLE `quasar`.`%s`",
+                            s_columnName,
+                            s_tableName);
+                    }
+                } // End of switch statement
+            } // End of 2nd for loop (Parse all columns for current table)
+            h_columnValues.Close();
+        } // End of while loop (Parse each row for current table)
+
+        s_query[sizeof(s_query)-2] = ';'; // Replace the last comma with a semicolon
+                                          // to finish the statement.
+        if (h_sqlDumpFile != null) {
+            h_sqlDumpFile.WriteLine(s_query);
+            h_sqlDumpFile.Close();
+        }
+
+        columnList[i].Close();
+    } // End of 1st for loop (Parse all queries)
+
+    // All tables have been dumped
+    // we can now move on to dropping existing
+    // tables so we can recreate them with the new schema
+} // End of function
+
+void SQLTxn_OnFailedToFetchTableForDump(Database db, any data, int numQueries, const char[] error, int failIndex, QSRDBTable[] queryData)
+{
+    QSR_ThrowError(
+        MODULE_NAME,
+        "COULD NOT FETCH TABLES TO SAVE DATA!\nERROR AT QUERY %d/%d!\nTable: %s\nERROR: %s\n",
+        failIndex+1,
+        numQueries,
+        gS_tableNames[view_as<int>(queryData[failIndex])],
+        error);
+}
+
+void SQLTxn_OnTablesErased(Database db, any data, int numQueries, DBResultSet[] results, QSRDBTable[] queryData)
 {
     int tableNum;
     for (int i=0; i < numQueries; i++) {

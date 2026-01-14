@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `quasar`.`players` (
     `can_vote` INT NOT NULL DEFAULT 1,
     `num_loadouts` INT NOT NULL DEFAULT 1,
     `equipped_loadout` INT NOT NULL DEFAULT 0,
+    `credits` INT NOT NULL DEFAULT 500,
     PRIMARY KEY (`id`),
     UNIQUE INDEX `idx_players_id` (`id` ASC),
     UNIQUE INDEX `idx_players_steam2_id` (`steam2_id` ASC),

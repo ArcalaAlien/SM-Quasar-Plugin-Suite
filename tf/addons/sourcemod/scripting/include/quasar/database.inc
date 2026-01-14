@@ -6,14 +6,41 @@
 #undef MODULE_NAME
 #define MODULE_NAME "Database"
 
-#define DATABASE_VERSION    "QSRDB_V0.1.0"  // 0.1.0 for now, even with the sql
-                                            // files finished there's still more
-                                            // updates I have to make.
+#define DATABASE_VERSION    "QSRDB_V0.2.0"
+/*
+    VERSION 0.2.0:  
+        * Updated stats.sql:
+            Moved first_login, last_login, playtime,
+            afk_time columns to the subserver_stats table
+            instead of the player table. The player table
+            is for global player information only.
 
-#define SQL_SETUP_DIR  "scripting/quasar/database/SQL/setup"
+            Created duplicate stats for dealing with
+            AFK players for every regular stat column.
+
+            Added indicies for every column in the table.
+        * Started making update process:
+            Step 1:
+                Finished creating the function to write all
+                data in tables into INSERT statements and
+                save those as SQL files.
+    Version 0.1.0: Initial release of Quasar Database
+        * Created step-based process for setting up the database
+            All tables are successfully created
+            Defaults are inserted into tables
+*/
+
+
+#define SQL_SETUP_DIR    "scripting/quasar/database/SQL/setup"
 #define SQL_UPDATE_DIR   "scripting/quasar/database/SQL/update"
+#define SQL_DUMP_DIR     "scripting/quasar/database/SQL/dumps"
 
 #define WAITING_FOR_SETUP view_as<QSRDBSetupStep>(-1)
+
+#define MAX_QUERY_LENGTH 3072
+#define SQL_TABLE_NAME_KEY "table_name"
+#define SQL_COLUMN_NAME_KEY "column_name"
+#define SQL_COLUMN_DATA_TYPE_KEY "data_type"
 
 enum QSRDBVersionStatus {
     DBVer_Equal,
@@ -37,6 +64,7 @@ enum QSRDBSetupStep {
 };
 
 enum QSRDBTable {
+    DBTable_Invalid = -1,
     // Main Tables
     DBTable_Version,
     DBTable_TFClasses,
@@ -76,6 +104,13 @@ enum QSRDBTable {
     DBTable_InventoryView,
     DBTable_MapRatingView,
     NUM_DBTABLES
+};
+
+enum QSRDBColDataType {
+    DBColType_Int,
+    DBColType_Float,
+    DBColType_String,
+    DBColType_Bool
 };
 
 public SharedPlugin __pl_quasarplugin =
