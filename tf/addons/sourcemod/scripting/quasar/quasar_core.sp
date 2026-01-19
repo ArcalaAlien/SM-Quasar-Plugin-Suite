@@ -18,9 +18,9 @@ Handle  gH_checkGameUpdateTimer = null;
 static File gH_logFile = null;
 
 // Forwards
-Handle gH_FWD_logCreated = null; // Called when the log file has been created sucessfully.
-Handle gH_FWD_chatFormatRetrieved = null;
-Handle gH_FWD_soundsRetrieved = null;
+GlobalForward gH_FWD_logCreated = null; // Called when the log file has been created sucessfully.
+GlobalForward gH_FWD_chatFormatRetrieved = null;
+GlobalForward gH_FWD_soundsRetrieved = null;
 
 // ConVars
 ConVar gH_CVR_logFile = null;
@@ -75,9 +75,9 @@ public void OnPluginStart()
 {
     // Forwards
 
-    gH_FWD_logCreated = CreateGlobalForward("QSR_OnLogFileMade", ET_Ignore, Param_CellByRef);
-    gH_FWD_chatFormatRetrieved = CreateGlobalForward("QSR_OnSystemFormattingRetrieved", ET_Ignore, Param_Cell);
-    gH_FWD_soundsRetrieved = CreateGlobalForward("QSR_OnSystemSoundsRetrieved", ET_Ignore, Param_Cell);
+    gH_FWD_logCreated = new GlobalForward("QSR_OnLogFileMade", ET_Ignore, Param_CellByRef);
+    gH_FWD_chatFormatRetrieved = new GlobalForward("QSR_OnSystemFormattingRetrieved", ET_Ignore, Param_Cell);
+    gH_FWD_soundsRetrieved = new GlobalForward("QSR_OnSystemSoundsRetrieved", ET_Ignore, Param_Cell);
 
     // AutoExecConfig Setup
     AutoExecConfig_SetFile("plugin.quasar_core");
@@ -378,8 +378,8 @@ void Native_QSRLogMessage(Handle plugin, int numParams)
 void Native_QSRSilentLog(Handle plugin, int numParams)
 {
     char s_nModule[32],
-         f_msg[3072], 
-         line[3072], 
+         f_msg[1024], 
+         line[1024], 
          s_time[24];
     
     GetNativeString(1, s_nModule, sizeof(s_nModule));
@@ -388,10 +388,10 @@ void Native_QSRSilentLog(Handle plugin, int numParams)
         0, 2, 3, sizeof(f_msg), .out_string=f_msg);
 
     FormatTime(s_time, sizeof(s_time), "%D %T");
-    FormatEx(line, sizeof(line), "[QUASAR (%s) %s]\n%s", s_nModule, s_time, f_msg);
+    FormatEx(line, sizeof(line), "[QUASAR (%s) %s] %s", s_nModule, s_time, f_msg);
 
-    if (gH_logFile != null) {
-        gH_logFile.Flush();
+    if (gH_logFile != null)  {
+        //gH_logFile.Flush();
         gH_logFile.WriteLine(line);
     }
 }

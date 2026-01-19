@@ -145,7 +145,7 @@ native bool QSR_PrintCenterTextEx(int userid, float pos[2], float holdTime, int 
  *  @param color2           Optional color as some effects use two.
  *  @param effect           Sets an effect on the text. See SetHudTextParams() for more details.
  *  @param effectSettings   A set of 3 floats that correspond to paramaters in SetHudTextParams(). [0] = fxTime, [1] = fadeIn, [2] = fadeOut
- */
+ *
 native void QSR_PrintCenterTextAllEx(float pos[2], float holdTime, int color1[4], int color2[4] = {255, 255, 255, 0}, int effect = 0, float effectSettings[3] = {6.0, 0.1, 0.2}, const char[] message, any ...);
 
 
@@ -163,7 +163,6 @@ native bool QSR_NotifyUser(int userid, const char[] sound, const char[] message,
 
 native void QSR_LogMessage(const char[] module, const char[] message, any ...);
 
-// Primarily used to log queries in transactions.
 native void QSR_SilentLog(const char[] module, const char[] message, any ...);
 
 native void QSR_ThrowError(const char[] module, const char[] message, any ...);
