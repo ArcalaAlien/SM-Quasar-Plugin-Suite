@@ -1491,7 +1491,7 @@ void SQLTxn_OnTableFetchedForDump(Database db, any data, int numQueries, DBResul
 
         FormatEx(s_filePath,
                 sizeof(s_filePath),
-                "%s/quasar_%s_dump.sql",
+                "%s/%s_dump.sql",
                 SQL_DUMP_DIR,
                 s_tableName);
         BuildPath(Path_SM,
