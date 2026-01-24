@@ -6,8 +6,21 @@
 #undef MODULE_NAME
 #define MODULE_NAME "Database"
 
-#define DATABASE_VERSION    "QSRDB_V0.2.1"
+#define DATABASE_VERSION    "QSRDB_V0.3.1"
 /*
+    VERSION 0.3.1:
+        Changed update database functionality:
+        * Now runs through the entire create database
+          process, including inserting all default values.
+        * The REPLACE INTO statement in table dumps has been
+          replaced with a INSERT INTO ... ON DUPLICATE KEY UPDATE
+          statement to ensure that existing rows are actually updated.
+    VERSION 0.3.0:
+        Update database functionality finally works!
+        Changed owner of tag_prte to "QUASAR" from "Default"
+        Updated groups.sql to replace double quotes with single quotes, and
+        also add the id column in the insert values to ensure consistency.
+        Removed \n from several areas in store/upgrades.sql
     VERSION 0.2.1:
         Moved category column out of maps.sql
         * Created map_categories.sql:

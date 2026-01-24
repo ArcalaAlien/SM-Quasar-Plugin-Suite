@@ -1719,7 +1719,7 @@ void SQLTxn_OnTableFetchedForDump(Database db, any data, int numQueries, DBResul
         h_sqlDumpFile = OpenFile(s_filePath, "w+");
         FormatEx(s_line,
                  sizeof(s_line),
-                 "-- ?%d\nREPLACE INTO `quasar`.`%s` (",
+                 "-- ?%d\nINSERT INTO `quasar`.`%s` (",
                  view_as<int>(e_currentTable),
                  s_tableName);
 
@@ -1843,6 +1843,30 @@ void SQLTxn_OnTableFetchedForDump(Database db, any data, int numQueries, DBResul
                     }
                 } // End of switch statement
             } // End of 2nd for loop (Parsed all columns for current row)
+
+            // Set up statement to handle duplicates upon insert
+            FormatEx(s_line,
+                     sizeof(s_line),
+                     "\nON DUPLICATE KEY UPDATE\n");
+            h_sqlDumpFile.WriteLine(s_line);
+
+            for (int j; j < h_columnList.Length; j++) {
+                FormatEx(s_columnKey,
+                         sizeof(s_columnKey),
+                         "%s_%d",
+                         SQL_COLUMN_NAME_KEY,
+                         j);
+                StringMap h_columnInfo = view_as<StringMap>(h_columnList.Get(j));
+                h_columnInfo.GetString(s_columnKey, s_columnKey, sizeof(s_columnKey));
+                FormatEx(s_line,
+                         sizeof(s_line),
+                         "\t`%s` = VALUES(`%s`)\n",
+                         s_columnKey,
+                         s_columnKey,
+                         (j < h_columnList.Length - 1) ? "," : "");
+                h_sqlDumpFile.WriteLine(s_line);
+            }
+
             h_columnValues.Close();
         } // End of while loop (Parsed each row for current table)
 
@@ -2040,7 +2064,7 @@ void SQLTxn_Update_OnTablesCreated(Database db, any prevTransactionId, int numQu
     }
     int i_transactionId = prevTransactionId;
     
-    if (gE_currentSetupStep > DBStep_CreateViews) {
+    if (gE_currentSetupStep > DBStep_FillJuncWithDefaults) {
         FormatEx(
             s_directory,
             sizeof(s_directory),
