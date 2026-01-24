@@ -49,7 +49,9 @@
 
 #define WAITING_FOR_SETUP view_as<QSRDBSetupStep>(-1)
 
-#define MAX_QUERY_LENGTH 3072
+#define MAX_QUERY_LENGTH 4096
+#define MAX_LINE_SIZE 512
+#define SQL_CHUNK_SPLIT_NUM 10  // The number of chunks to break up a large query
 #define INVALID_TRANSACTION -1
 
 #define SQL_TABLE_NAME_KEY "table_name"
@@ -102,10 +104,11 @@ enum QSRDBTable {
     DBTable_ColorPackNames,
     DBTable_SubserverStats,
     DBTable_SubserverMaps,
-    DBTable_SubserverVotes,
-    DBTable_SubserverChatLogs,
+
 
     // Junction Tables
+    DBTable_SubserverVotes,
+    DBTable_SubserverChatLogs,
     DBTable_TFItemsClasses,
     DBTable_TFItemsAttributes,
     DBTable_PlayersGroups,

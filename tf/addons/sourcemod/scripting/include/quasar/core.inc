@@ -31,13 +31,16 @@ public SharedPlugin __pl_quasarcore =
 
 public __pl_quasarcore_SetNTVOptional()
 {
-    MarkNativeAsOptional("QSR_GetSQLSettings");
     MarkNativeAsOptional("QSR_GetSystemFormatting");
     MarkNativeAsOptional("QSR_PrintToChat");
     MarkNativeAsOptional("QSR_PrintToChatAll");
     MarkNativeAsOptional("QSR_PrintCenterTextEx");
     MarkNativeAsOptional("QSR_PrintCenterTextAllEx");
     MarkNativeAsOptional("QSR_NotifyUser");
+    MarkNativeAsOptional("QSR_SilentLogLarge");
+    MarkNativeAsOptional("QSR_ThrowError");
+    MarkNativeAsOptional("QSR_LogMessage");
+    MarkNativeAsOptional("QSR_SilentLog");
 }
 
 /*           */
@@ -164,6 +167,8 @@ native bool QSR_NotifyUser(int userid, const char[] sound, const char[] message,
 native void QSR_LogMessage(const char[] module, const char[] message, any ...);
 
 native void QSR_SilentLog(const char[] module, const char[] message, any ...);
+
+native void QSR_SilentLogLarge(const char[] module, const char[] message, any ...);
 
 native void QSR_ThrowError(const char[] module, const char[] message, any ...);
 /*          */

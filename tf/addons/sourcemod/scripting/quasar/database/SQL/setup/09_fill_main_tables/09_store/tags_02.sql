@@ -19,7 +19,7 @@ REPLACE INTO `quasar`.`tags` (`item_id`, `name`, `display`, `creator_id`, `price
 ('tag_nonb', 'Nonbinary', 'Nonbinary', 'QUASAR', 750),
 ('tag_owo', 'OwO', 'OwO', 'QUASAR', 1500),
 ('tag_pan', 'Pansexual', 'Pan', 'QUASAR', 750),
-('tag_pirt', 'Pirate', 'Pirate', 'REGULAR', 0),
+('tag_pirt', 'Pirate', 'Pirate', 'QUASAR', 500),
 ('tag_poli', 'Politician', 'Politician', 'QUASAR', 7500),
 ('tag_rich', 'Rich', 'Rich', 'Donator', 0),
 ('tag_robt', 'Robot', 'Robot', 'QUASAR', 750),

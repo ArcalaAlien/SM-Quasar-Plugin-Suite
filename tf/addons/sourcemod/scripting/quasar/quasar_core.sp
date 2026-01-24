@@ -67,7 +67,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("QSR_LogMessage",              Native_QSRLogMessage);
     CreateNative("QSR_SilentLog",               Native_QSRSilentLog);
     CreateNative("QSR_ThrowError",              Native_QSRThrowError);
-
+    CreateNative("QSR_SilentLogLarge",          Native_QSRSilentLogLarge);
     gB_late = late;
 }
 
@@ -369,8 +369,8 @@ void Native_QSRLogMessage(Handle plugin, int numParams)
     FormatEx(line, sizeof(line), "[QUASAR (%s) %s] %s", s_nModule, s_time, f_msg);
 
     if (gH_logFile != null)  {
-        gH_logFile.Flush();
         gH_logFile.WriteLine(line);
+        gH_logFile.Flush();
         PrintToServer(line);
     }
 }
@@ -378,8 +378,8 @@ void Native_QSRLogMessage(Handle plugin, int numParams)
 void Native_QSRSilentLog(Handle plugin, int numParams)
 {
     char s_nModule[32],
-         f_msg[1024], 
-         line[1024], 
+         f_msg[1025], 
+         line[512], 
          s_time[24];
     
     GetNativeString(1, s_nModule, sizeof(s_nModule));
@@ -391,8 +391,29 @@ void Native_QSRSilentLog(Handle plugin, int numParams)
     FormatEx(line, sizeof(line), "[QUASAR (%s) %s] %s", s_nModule, s_time, f_msg);
 
     if (gH_logFile != null)  {
-        //gH_logFile.Flush();
         gH_logFile.WriteLine(line);
+        gH_logFile.Flush();
+    }
+}
+
+void Native_QSRSilentLogLarge(Handle plugin, int numParams)
+{
+    char s_nModule[32],
+         f_msg[3073], 
+         line[3073], 
+         s_time[24];
+    
+    GetNativeString(1, s_nModule, sizeof(s_nModule));
+    SetGlobalTransTarget(LANG_SERVER);
+    FormatNativeString(
+        0, 2, 3, sizeof(f_msg), .out_string=f_msg);
+
+    FormatTime(s_time, sizeof(s_time), "%D %T");
+    FormatEx(line, sizeof(line), "[QUASAR (%s) %s] %s", s_nModule, s_time, f_msg);
+
+    if (gH_logFile != null)  {
+        gH_logFile.WriteLine(line);
+        gH_logFile.Flush();
     }
 }
 

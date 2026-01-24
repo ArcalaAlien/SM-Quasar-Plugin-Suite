@@ -3,8 +3,6 @@
 #endif
 #define _quasar_scoreboard_included
 
-#include <quasar/structs/scoreboard>
-
 public SharedPlugin __pl_quasarscoreboard =
 {
     name="quasar_scoreboard",
