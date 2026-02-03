@@ -4,7 +4,8 @@
 #define _quasar_bank_included
 
 #include <quasar/structs/bank>
-
+#undef   MODULE_NAME
+#define  MODULE_NAME "Bank"
 #define TRIGGER_MODEL "error.mdl"
 
 public SharedPlugin __pl_quasarbank =

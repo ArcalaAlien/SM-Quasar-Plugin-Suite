@@ -190,7 +190,7 @@ def InsertItems(itemJson):
                         i_class = 1
                 
                 c.execute(
-                    "INSERT INTO `quasar`.`tf_itemsclasses` (`item_id`, `class`) " \
+                    "INSERT INTO `quasar`.`tf_items_classes` (`item_id`, `class`) " \
                     "VALUES (%s, %s) ON DUPLICATE KEY " \
                     "UPDATE `item_id`=`item_id`, `class`=`class`;",
                     [

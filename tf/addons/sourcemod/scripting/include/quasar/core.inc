@@ -13,6 +13,8 @@
 
 #define MODULE_NAME     "Core"
 
+#define SERVER 0
+
 #include <quasar/structs/color>
 #include <regex>
 
@@ -29,13 +31,16 @@ public SharedPlugin __pl_quasarcore =
 
 public __pl_quasarcore_SetNTVOptional()
 {
-    MarkNativeAsOptional("QSR_GetSQLSettings");
     MarkNativeAsOptional("QSR_GetSystemFormatting");
     MarkNativeAsOptional("QSR_PrintToChat");
     MarkNativeAsOptional("QSR_PrintToChatAll");
     MarkNativeAsOptional("QSR_PrintCenterTextEx");
     MarkNativeAsOptional("QSR_PrintCenterTextAllEx");
     MarkNativeAsOptional("QSR_NotifyUser");
+    MarkNativeAsOptional("QSR_SilentLogLarge");
+    MarkNativeAsOptional("QSR_ThrowError");
+    MarkNativeAsOptional("QSR_LogMessage");
+    MarkNativeAsOptional("QSR_SilentLog");
 }
 
 /*           */
@@ -102,12 +107,6 @@ enum struct QSRGeneralSounds
 /*         */
 
 
-
-/**
- *  Manually refresh the Quasar database.
-*/
-native void QSR_RefreshDatabase();
-
 /**
  *  Automatically appends the quasar prefix to a message to send to a valid client
  *
@@ -149,7 +148,7 @@ native bool QSR_PrintCenterTextEx(int userid, float pos[2], float holdTime, int 
  *  @param color2           Optional color as some effects use two.
  *  @param effect           Sets an effect on the text. See SetHudTextParams() for more details.
  *  @param effectSettings   A set of 3 floats that correspond to paramaters in SetHudTextParams(). [0] = fxTime, [1] = fadeIn, [2] = fadeOut
- */
+ *
 native void QSR_PrintCenterTextAllEx(float pos[2], float holdTime, int color1[4], int color2[4] = {255, 255, 255, 0}, int effect = 0, float effectSettings[3] = {6.0, 0.1, 0.2}, const char[] message, any ...);
 
 
@@ -158,26 +157,23 @@ native void QSR_PrintCenterTextAllEx(float pos[2], float holdTime, int color1[4]
  *
  *  @param userid       The client userid to send the message to.
  *  @param sound        The sound to play to the user.
- *  @param message      The message to send to the user.
+ *  @param message      The message to send to the user.    
  *  @param ...          Paramaters for formatting.
  *
  *  @return             True if we notified the client, false if not.
  */
 native bool QSR_NotifyUser(int userid, const char[] sound, const char[] message, any ...);
 
+native void QSR_LogMessage(const char[] module, const char[] message, any ...);
+
+native void QSR_SilentLog(const char[] module, const char[] message, any ...);
+
+native void QSR_SilentLogLarge(const char[] module, const char[] message, any ...);
+
+native void QSR_ThrowError(const char[] module, const char[] message, any ...);
 /*          */
 /* FORWARDS */
 /*          */
-
-/**
- *  Fires once the core plugin has connected to the Quasar database.
- *
- *  @param db           A reference to the Database handle in the core plugin.
- *  @param subdomain    The subdomain used during the creation of the tables, EX. tf2.mywebsite.com's subdomain would be "tf2"
- *  @param subdomainLen length of the subdomain.
- */
-forward void QSR_OnDatabaseConnected(Database& db, char[] subdomain, int subdomainLen);
-
 
 /**
  *  Fires once the core plugin has made the log file.
@@ -214,7 +210,10 @@ forward void QSR_OnSystemSoundsRetrieved(StringMap sounds);
  */
 stock int QSR_IsValidClient(int client)
 {
-    if (client && IsClientInGame(client) && !IsFakeClient(client)) { return GetClientUserId(client); }
+    if (client && 
+        IsClientInGame(client) && 
+        !IsFakeClient(client)) 
+        return GetClientUserId(client);
 
     return 0;
 }
@@ -227,64 +226,13 @@ stock int QSR_IsValidClient(int client)
  */
 stock int QSR_IsValidClientEX(int client)
 {
-    if (client && IsClientInGame(client) && !IsFakeClient(client) && IsPlayerAlive(GetClientUserId(client))) { return GetClientUserId(client); }
+    int i_userid = QSR_IsValidClient(client);
+
+    if (i_userid &&
+        IsPlayerAlive(i_userid))
+        return i_userid;
 
     return 0;
-}
-
-
-/**
- *  Sends a query to the database and logs it in the logfile.
- *
- *  @param log      Log file to save to.
- *  @param db       Database to send query to.
- *  @param query    The query to send.
- *  @param callback The SQLQueryCallback to use for the query.
- *  @param data     Any data you need to pass into the query.
- */
-stock void QSR_LogQuery(File log, Database db, const char[] query, SQLQueryCallback callback, any data=0)
-{
-    char line[512], s_time[24];
-    FormatTime(s_time, sizeof(s_time), "%D %T");
-    FormatEx(line, sizeof(line), "[QSR (%s) %s] Query Sent: %s", MODULE_NAME, s_time, query);
-    if (log != null) { log.WriteLine(line); }
-
-    db.Query(callback, query, data);
-}
-
-/**
- *  Logs a message to the server console, and to the log file.
- *
- *  @param log      Log file to save to.
- *  @param message  The message to save.
- *  @param ...      data for formatting
- */
-stock void QSR_LogMessage(File log, const char[] module, const char[] message, any ...)
-{
-    char f_msg[1025], line[512], s_time[24];
-
-    SetGlobalTransTarget(LANG_SERVER);
-    VFormat(f_msg, sizeof(f_msg), message, 4);
-
-    FormatTime(s_time, sizeof(s_time), "%D %T");
-    FormatEx(line, sizeof(line), "[QSR (%s) %s] %s", module, s_time, f_msg);
-
-    if (log != null) { log.WriteLine(line); }
-    PrintToServer(line);
-}
-
-stock void QSR_ThrowError(File log, const char[] module, const char[] message, any ...)
-{
-    char f_msg[1025], line[512], s_time[24];
-
-    SetGlobalTransTarget(LANG_SERVER);
-    VFormat(f_msg, sizeof(f_msg), message, 4);
-
-    FormatTime(s_time, sizeof(s_time), "%D %T");
-    FormatEx(line, sizeof(line), "[QSR (%s) %s] ERROR! %s", module, s_time, f_msg);
-
-    if (log != null) { log.WriteLine(line); }
-    ThrowError(line);
 }
 
 /**

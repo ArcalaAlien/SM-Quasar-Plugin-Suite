@@ -19,5 +19,6 @@ public SharedPlugin __pl_quasaritems =
 
 public __pl_quasaritems_SetNTVOptional()
 {
-
+    MarkNativeAsOptional("QSR_CheckForUpgrade");
+    MarkNativeAsOptional("QSR_AddUpgrade");
 }
