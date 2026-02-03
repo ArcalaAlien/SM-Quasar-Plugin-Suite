@@ -1,29 +1,29 @@
 -- ?33
 CREATE OR REPLACE VIEW `quasar`.`inventories` AS
 SELECT
-    PLYRITMS.STEAM64_ID,
-    PLYRITMS.ITEM_ID,
-    STRTRLS.NAME AS TRAIL_NAME,
-    STRTRLS.VTF_FILEPATH,
-    STRTRLS.VMT_FILEPATH,
-    STRTRLS.PRICE AS TRAIL_PRICE,
-    STRTAGS.NAME AS TAG_NAME,
-    STRTAGS.DISPLAY,
-    STRTAGS.PRICE AS TAG_PRICE,
-    STRSNDS.NAME AS SOUND_NAME,
-    STRSNDS.PRICE AS SOUND_PRICE,
-    STRSNDS.FILEPATH,
-    STRSNDS.COOLDOWN,
-    STRSNDS.ACTIVATION_PHRASE,
-    STRUPGD.NAME AS UPGRADE_NAME,
-    STRUPGD.PRICE AS UPGRADE_PRICE,
-    STRUPGD.DESCRIPTION AS UPGRADE_DESCRIPTION
-FROM `quasar`.`players_items` AS PLYRITMS
-LEFT JOIN `quasar`.`trails` AS STRTRLS
-    ON PLYRITMS.ITEM_ID = STRTRLS.ITEM_ID
-LEFT JOIN `quasar`.`tags` AS STRTAGS
-    ON PLYRITMS.ITEM_ID = STRTAGS.ITEM_ID
-LEFT JOIN `quasar`.`sounds` AS STRSNDS
-    ON PLYRITMS.ITEM_ID = STRSNDS.ITEM_ID
-LEFT JOIN `quasar`.`upgrades` AS STRUPGD
-    ON PLYRITMS.ITEM_ID = STRUPGD.ITEM_ID;
+    plr.steam64_id,
+    plr.item_id,
+    trl.name AS trail_name,
+    trl.vtf_filepath,
+    trl.vmt_filepath,
+    trl.price AS trail_price,
+    tag.name AS tag_name,
+    tag.display,
+    tag.price AS tag_price,
+    snd.name AS sound_name,
+    snd.price AS sound_price,
+    snd.filepath,
+    snd.cooldown,
+    snd.activation_phrase,
+    ugd.name AS upgrade_name,
+    ugd.price AS upgrade_price,
+    ugd.description AS upgrade_description
+FROM `quasar`.`players_items` AS plr
+LEFT JOIN `quasar`.`trails` AS trl
+    ON plr.item_id = trl.item_id
+LEFT JOIN `quasar`.`tags` AS tag
+    ON plr.item_id = tag.item_id
+LEFT JOIN `quasar`.`sounds` AS snd
+    ON plr.item_id = snd.item_id
+LEFT JOIN `quasar`.`upgrades` AS ugd
+    ON plr.item_id = ugd.item_id;

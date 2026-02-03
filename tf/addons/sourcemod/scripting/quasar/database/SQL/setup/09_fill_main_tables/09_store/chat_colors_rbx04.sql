@@ -1,5 +1,5 @@
 -- ?17
-REPLACE INTO `quasar`.`chat_colors` (`format`, `name`, `category`, `price`) VALUES
+INSERT INTO `quasar`.`chat_colors` (`format`, `name`, `category`, `price`) VALUES
 ('rsandred', 'R. Sand Red', 'Red', 200),
 ('rsandviolet', 'R. Sand Violet', 'Purple', 200),
 ('rseagreen', 'R. Sea Green', 'Green', 200),

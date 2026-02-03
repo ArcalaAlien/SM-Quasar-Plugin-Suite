@@ -1,5 +1,5 @@
 -- ?12
-REPLACE INTO `quasar`.`sounds` (`item_id`, `name`, `filepath`, `cooldown`, `creator_id`, `price`, `activation_phrase`) VALUES
+INSERT INTO `quasar`.`sounds` (`item_id`, `name`, `filepath`, `cooldown`, `creator_id`, `price`, `activation_phrase`) VALUES
 ('snd_fwrb', 'Fart (w Reverb)', 'quasar/fwr.mp3', 2, 'QUASAR', 1000, 'fart'),
 ('snd_gate', 'OPEN THE GATE', 'quasar/open_the_gate.mp3', 0.1, 'QUASAR', 250, 'OPEN THE GATE!'),
 ('snd_guts', "Gutsman's Ass", 'quasar/gutsman.mp3', 2, 'QUASAR', 500, 'gutsman'),

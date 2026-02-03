@@ -1,5 +1,5 @@
 -- ?26
-REPLACE INTO `quasar`.`colors_in_packs` (`color_format`, `pack_id`) VALUES
+INSERT INTO `quasar`.`colors_in_packs` (`color_format`, `pack_id`) VALUES
 ('gray', 2),
 ('dimgray', 2),
 ('lightgray', 2),

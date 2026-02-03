@@ -18,7 +18,6 @@ static char gS_dbProfile[64]; // The database profile name in databases.cfg
 static bool gB_dbConnected = false; // Are we connected to the database yet?
 static bool gB_logTransactions = false; // Do we log all queries in a transaction?
 static char gS_dbVersion[24]; // The version number of our database.
-static bool gB_isTableUpdated[view_as<int>(NUM_DBTABLES)] = {false, ...};
 static QSRDBSetupStep gE_currentSetupStep = DBStep_WaitingForSetup;
 
 static int  gI_maxTransactions;
@@ -636,7 +635,7 @@ void Internal_StartDBUpdate() {
         Internal_AddTableToInfoTransaction(i);
 
     gH_db.Execute(gH_DBTransaction,
-                    SQLTxn_OnColumnInfoFetched,
+                    SQLTxn_Update_OnColumnInfoFetched,
                     SQLTxn_FailedToFetchColumnInfo,
                     .priority=DBPrio_High);
     gH_DBTransaction = null;
@@ -872,7 +871,11 @@ void Internal_Setup_DirectoryToTransaction(const char[] directory, int transacti
                     continue;
                 }
                 QSR_SilentLog(MODULE_NAME, "Step %d: Adding SQL file: %s", gE_currentSetupStep, s_finalPath);
-                Internal_AddSQLFileToTrans(s_finalPath, transactionId);
+                
+                if (gE_currentSetupStep < DBStep_FillMainWithDefaults)
+                    Internal_AddSQLFileToTrans(s_finalPath, transactionId);
+                else
+                    Internal_AddInsertSQLToTrans(s_finalPath, transactionId);
             }
             default:
                 continue;
@@ -1033,8 +1036,6 @@ void Internal_AddSQLFileToTrans(const char[] sqlFile, int transactionId) {
     char s_totalQuery[MAX_QUERY_LENGTH];
     char s_currentLine[MAX_LINE_SIZE];
     QSRDBTable e_currentTable;
-    bool b_isInsert = false;
-    char s_tableName[64];
     while (h_sqlFile.ReadLine(s_currentLine, sizeof(s_currentLine))) {
         if (StrContains(s_currentLine, "-- ?", false) != -1) {
             ReplaceString(s_currentLine,
@@ -1054,99 +1055,9 @@ void Internal_AddSQLFileToTrans(const char[] sqlFile, int transactionId) {
                 false);
         }
 
-        // Check if this is an INSERT or REPLACE statement, but NOT a CREATE statement (like CREATE VIEW)
-        if ((StrContains(s_currentLine, "INSERT INTO", false) != -1 ||
-             StrContains(s_currentLine, "REPLACE INTO", false) != -1) &&
-            StrContains(s_currentLine, "CREATE", false) == -1) {
-            b_isInsert = true;
-        }
-
-        if (b_isInsert) {
-            static char s_insertLine[MAX_LINE_SIZE];
-
-            // If we're on the INSERT / REPLACE line, store it for later.
-            if (StrContains(s_currentLine, "VALUES", false) != -1) {
-                strcopy(
-                    s_insertLine,
-                    sizeof(s_insertLine),
-                    s_currentLine);
-                continue;
-            }
-
-            // First we need to get the table name 
-            strcopy(
-                s_tableName,
-                sizeof(s_tableName),
-                gS_tableNames[view_as<int>(e_currentTable)]);
-
-            // Make sure we replace PLREPLACE with the actual
-            // subserver name if needed.
-            if (StrContains(s_tableName, "PLREPLACE") != -1) {
-                ReplaceString(
-                    s_tableName,
-                    sizeof(s_tableName),
-                    "PLREPLACE",
-                    gS_subserver,
-                    false);
-            }
-
-            // Remove any semicolons at the end of the line
-            if (StrContains(s_currentLine, ";", false) != -1) {
-                ReplaceString(
-                    s_currentLine,
-                    sizeof(s_currentLine),
-                    ";\n",
-                    "",
-                    false);
-            }
-
-            // Gotta remove any commas and new lines for the statement
-            if (StrContains(s_currentLine, "),\n", false) != -1)
-                ReplaceString(
-                    s_currentLine,
-                    sizeof(s_currentLine),
-                    "),\n",
-                    ")",
-                    false);
-            else if (StrContains(s_currentLine, "), ", false) != -1)
-                ReplaceString(
-                    s_currentLine,
-                    sizeof(s_currentLine),
-                    "), ",
-                    ")",
-                    false);
-            else if (StrContains(s_currentLine, "),", false) != -1)
-                ReplaceString(
-                    s_currentLine,
-                    sizeof(s_currentLine),
-                    "),",
-                    ")",
-                    false);
-            // Now we can format the full query
-            FormatEx(
-                s_totalQuery,
-                sizeof(s_totalQuery),
-                "%s%s;\n",
-                s_insertLine,
-                s_currentLine);
-
-            DataPack h_queryInfo = new DataPack();
-            h_queryInfo.WriteString(s_totalQuery);
-            h_queryInfo.WriteCell(e_currentTable);
-
-            QSR_AddQueryToTransaction(MODULE_NAME,
-                                      transactionId,
-                                      h_queryInfo,
-                                      s_totalQuery);
-            continue;
-        } // End of insert check
-
-        // Send a normal query
-        FormatEx(
+        StrCat(
             s_totalQuery,
             sizeof(s_totalQuery),
-            "%s%s",
-            s_totalQuery,
             s_currentLine);
     }
 
@@ -1155,9 +1066,9 @@ void Internal_AddSQLFileToTrans(const char[] sqlFile, int transactionId) {
     h_queryInfo.WriteCell(e_currentTable);
 
     QSR_AddQueryToTransaction(MODULE_NAME,
-                              transactionId,
-                              h_queryInfo,
-                              s_totalQuery);
+                                transactionId,
+                                h_queryInfo,
+                                s_totalQuery);
     h_sqlFile.Close();
 }
 
@@ -1182,10 +1093,10 @@ void Internal_AddInsertSQLToTrans(const char[] sqlFile, int transactionId) {
 
     char s_totalQuery[MAX_QUERY_LENGTH],
          s_currentLine[MAX_LINE_SIZE],
-         s_escapedLine[(MAX_LINE_SIZE*2)+1],
          s_insertLine[MAX_LINE_SIZE],
          s_tableName[64];
     QSRDBTable e_currentTable;
+    ArrayList h_columns = null;
     while (h_sqlFile.ReadLine(s_currentLine, sizeof(s_currentLine))) {
         if (StrContains(s_currentLine, "-- ?", false) != -1) {
             ReplaceString(s_currentLine,
@@ -1194,15 +1105,6 @@ void Internal_AddInsertSQLToTrans(const char[] sqlFile, int transactionId) {
                           "");
             e_currentTable = view_as<QSRDBTable>(StringToInt(s_currentLine));
             continue;
-        }
-
-        if (StrContains(s_currentLine, "PLREPLACE", false) != -1) {
-            ReplaceString(
-                s_currentLine,
-                sizeof(s_currentLine),
-                "PLREPLACE",
-                gS_subserver,
-                false);
         }
 
         // Check if this is an INSERT or REPLACE statement, but NOT a CREATE statement (like CREATE VIEW)
@@ -1215,14 +1117,53 @@ void Internal_AddInsertSQLToTrans(const char[] sqlFile, int transactionId) {
             continue;
         }
 
+        if (StrContains(s_currentLine, "PLREPLACE", false) != -1) {
+            ReplaceString(
+                s_currentLine,
+                sizeof(s_currentLine),
+                "PLREPLACE",
+                gS_subserver,
+                false);
+        }
 
-        
-        // If we're on the INSERT / REPLACE line, store it for later.
-        if (StrContains(s_currentLine, "VALUES", false) != -1) {
+        // If we're on the INSERT / REPLACE line, grab the columns
+        // from the query and the insert line itself for later.
+        //
+        // Now that we also create ON DUPLICATE KEY statements
+        // for every column, we also need to make sure we grab the
+        // insert line only, as there is more than one line now that
+        // can contain "VALUES"
+        if (StrContains(s_currentLine, "VALUES", false) != -1 &&
+            !s_insertLine[0]) {
             strcopy(
                 s_insertLine,
                 sizeof(s_insertLine),
                 s_currentLine);
+
+            h_columns = Internal_ExtractColumnsFromInsertLine(s_currentLine);
+            if (h_columns == null) {
+                QSR_LogMessage(MODULE_NAME,
+                               "ERROR! Failed to extract columns from insert line: %s",
+                               s_currentLine);
+                h_columns.Close();
+                break;
+            }
+
+            continue;
+        }
+
+        // Skip ON DUPLICATE KEY UPDATE section - we generate our own
+        // This stops us from processing the dump file's ON DUPLICATE KEY section as values
+        if (StrContains(s_currentLine, "ON DUPLICATE KEY", false) != -1 ||
+            StrContains(s_currentLine, "` = VALUES(`", false) != -1 ||
+            StrContains(s_currentLine, "` = `", false) != -1) {
+            continue;
+        }
+
+        // Skip empty lines or lines that don't look like value rows
+        TrimString(s_currentLine);
+        if (s_currentLine[0] == '\0' || 
+            (s_currentLine[0] != '(' && StrContains(s_currentLine, "(", false) == -1)) {
             continue;
         }
 
@@ -1243,91 +1184,175 @@ void Internal_AddInsertSQLToTrans(const char[] sqlFile, int transactionId) {
                 false);
         }
 
+        // Remove leading and trailing white spaces
         TrimString(s_currentLine);
+
+        if (StrContains(s_currentLine, "\n", false) != -1) {
+            ReplaceString(
+                s_currentLine,
+                sizeof(s_currentLine),
+                "\n",
+                "",
+                false);
+        }
+
         // Remove any semicolons at the end of the line
         if (StrContains(s_currentLine, ";", false) != -1) {
             ReplaceString(
                 s_currentLine,
                 sizeof(s_currentLine),
-                ";\n",
+                ";",
                 "",
                 false);
         }
 
-        if (StrContains(s_currentLine, "),\n", false) != -1)
-            ReplaceString(
-                s_currentLine,
-                sizeof(s_currentLine),
-                "),\n",
-                ")",
-                false);
-        else if (StrContains(s_currentLine, "),", false) != -1)
+        if (StrContains(s_currentLine, "),", false) != -1)
             ReplaceString(
                 s_currentLine,
                 sizeof(s_currentLine),
                 "),",
                 ")",
                 false);
-        /*
-        // Now we have to escape single quotes.
-        // SQL_EscapeString ends up escaping single quotes that
-        // start a value, not just the single quotes within the value itself.
-        bool b_inValue = false;
-        int  i_writeCursor = 0;
-        for (int i; i < strlen(s_currentLine); i++) {
-            // 39 is ascii for a single quote
-            if (s_currentLine[i] == 39 &&
-                !b_inValue) {
-                b_inValue = true;
-                s_escapedLine[i_writeCursor++] = s_currentLine[i];
-                continue;
-            }
 
-            else if (s_currentLine[i] == 39 &&
-                     b_inValue) {
-                if (s_currentLine[i+1] == ')' ||
-                   (s_currentLine[i+1] == ',')) {
-                    s_escapedLine[i_writeCursor++] = s_currentLine[i];
-                    b_inValue = false;
-                    continue;
-                }
-
-                s_escapedLine[i_writeCursor++] = 39;
-                s_escapedLine[i_writeCursor++] = 39;
-                continue;
-            }
-
-            s_escapedLine[i_writeCursor++] = s_currentLine[i];
-        }
-        s_escapedLine[i_writeCursor] = '\0';
-        */
         FormatEx(
             s_totalQuery,
             sizeof(s_totalQuery),
-            "%s%s;\n",
+            "%s%s\n",
             s_insertLine,
             s_currentLine);
+
+        StrCat(s_totalQuery,
+               sizeof(s_totalQuery),
+               "\nON DUPLICATE KEY UPDATE \n");
+
+        char s_columnName[64],
+             s_tempLine[MAX_LINE_SIZE];
+
+        for (int i; i < h_columns.Length; i++) {
+            h_columns.GetString(i,
+                                s_columnName,
+                                sizeof(s_columnName));
+            FormatEx(s_tempLine,
+                     sizeof(s_tempLine),
+                     "\t`%s` = VALUES(`%s`)%s",
+                     s_columnName,
+                     s_columnName,
+                     (i < h_columns.Length-1) ? ",\n" : ";");
+            StrCat(s_totalQuery,
+                   sizeof(s_totalQuery),
+                   s_tempLine);
+        }
 
         DataPack h_queryInfo = new DataPack();
         h_queryInfo.WriteString(s_totalQuery);
         h_queryInfo.WriteCell(e_currentTable);
-
         QSR_AddQueryToTransaction(MODULE_NAME,
                                     transactionId,
                                     h_queryInfo,
                                     s_totalQuery);
-        continue;
     }
 
-    DataPack h_queryInfo = new DataPack();
-    h_queryInfo.WriteString(s_totalQuery);
-    h_queryInfo.WriteCell(e_currentTable);
-
-    QSR_AddQueryToTransaction(MODULE_NAME,
-                              transactionId,
-                              h_queryInfo,
-                              s_totalQuery);
     h_sqlFile.Close();
+}
+
+ArrayList Internal_ExtractColumnsFromInsertLine(const char[] insertLine) {
+    ArrayList h_columns = new ArrayList(ByteCountToCells(64));
+    char s_columnName[64];
+    bool b_inColumnName = false,
+         b_endOfColumnName = false;
+    int i_startOfList = FindCharInString(insertLine, '('),
+        i_endOfList = -1,
+        i_lenOfStatement = strlen(insertLine),
+        i_nameIndex = 0;
+
+    // Find the closing ) of the column list (not inside backticks)
+    bool b_inBacktick = false;
+    for (int i = i_startOfList + 1; i < i_lenOfStatement; i++) {
+        if (insertLine[i] == '`') {
+            b_inBacktick = !b_inBacktick;
+        }
+        else if (insertLine[i] == ')' && !b_inBacktick) {
+            i_endOfList = i;
+            break;
+        }
+    }
+
+    if (i_startOfList == -1 ||
+        i_endOfList == -1) {
+        QSR_LogMessage(MODULE_NAME,
+                       "ERROR! UNABLE TO FIND STARTING OR ENDING PARENTHESES IN INSERT STATEMENT!\n%s",
+                       insertLine);
+        h_columns.Close();
+        return null;
+    }
+
+    // Search the entire string for column names.
+    for (int i; i < i_lenOfStatement; i++) {
+        // If we're between the start and end of the column list (inclusive of end for single-column tables)
+        if (i > i_startOfList && i <= i_endOfList) {
+            
+            // If we hit a '`' we might be in a column name.
+            if (insertLine[i] == '`') {
+                // We've hit the first ` of a column name.
+                if (!b_inColumnName) {
+                    b_inColumnName = true;
+                    continue;
+                }
+
+                // If the next character is a , or a )
+                // we've hit the end of the column name.
+                if ((i+1) < i_lenOfStatement &&
+                    (insertLine[i+1] == ',' || insertLine[i+1] == ')') &&
+                    !b_endOfColumnName) {
+                    b_endOfColumnName = true;
+                    continue;
+                }
+            }
+
+            if (b_inColumnName && !b_endOfColumnName) {
+                if (i_nameIndex < (sizeof(s_columnName)-1))
+                    s_columnName[i_nameIndex++] = insertLine[i];
+                else {
+                    s_columnName[i_nameIndex] = '\0';
+                    QSR_LogMessage(MODULE_NAME,
+                                   "ERROR! COLUMN NAME %s TRUNCATED!",
+                                   s_columnName);
+                    h_columns.Close();
+                    return null;
+                }
+            }
+
+            if (b_endOfColumnName) {
+                // Add null terminator to column name.
+                s_columnName[i_nameIndex] = '\0';
+                h_columns.PushString(s_columnName);
+
+                // Reset column name buffer.
+                s_columnName[0] = '\0';
+                i_nameIndex = 0;
+                b_inColumnName = false;
+                b_endOfColumnName = false;
+            }
+        }
+    }
+
+    if (h_columns.Length == 0) {
+        h_columns.Close();
+        h_columns = null;
+    }
+
+    return h_columns;
+}
+
+int Internal_FindLastColumn(const char[] insertLine) {
+    // We'll start backwards for effeciency sake.
+    
+    for (int i = 0; i < strlen(insertLine); i++)
+        if (insertLine[i] == ')' &&
+            insertLine[--i] != '`')
+            return i;
+
+    return -1;
 }
 
 /*------------------*\
@@ -1355,14 +1380,6 @@ void Internal_AddTableToInfoTransaction(QSRDBTable e_table)
              "FROM INFORMATION_SCHEMA.COLUMNS \n"...
              "WHERE `table_schema` = 'quasar' AND `table_name` = '%s';",
              s_tableName);
-
-    if (gB_logTransactions)
-        QSR_SilentLogLarge(
-            MODULE_NAME,
-            "Table %d (%s):\n%s",
-            view_as<int>(e_table),
-            gS_tableNames[view_as<int>(e_table)],
-            s_query);
 
     gH_DBTransaction.AddQuery(s_query, e_table);
 }
@@ -1585,7 +1602,7 @@ void SQLTxn_ExternalTransactionFailure(Database db, DataPack data, int numQuerie
     Call_PushArray(queryData, numQueries);
 }
 
-void SQLTxn_OnColumnInfoFetched(Database db, any data, int numQueries, DBResultSet[] results, QSRDBTable[] queryData)
+void SQLTxn_Update_OnColumnInfoFetched(Database db, any data, int numQueries, DBResultSet[] results, QSRDBTable[] queryData)
 {
     char s_tableName[64],
          s_columnName[64],
@@ -1594,7 +1611,6 @@ void SQLTxn_OnColumnInfoFetched(Database db, any data, int numQueries, DBResultS
 
     gH_DBTransaction = new Transaction();
     for (int i; i < numQueries; i++) {
-
         Internal_GetTableName(queryData[i],
                               s_tableName,
                               sizeof(s_tableName));
@@ -1604,6 +1620,8 @@ void SQLTxn_OnColumnInfoFetched(Database db, any data, int numQueries, DBResultS
             results[i].FetchString(0,
                     s_columnName,
                     sizeof(s_columnName));
+            if (StrEqual(s_columnName, "id"))
+                continue;
             results[i].FetchString(1,
                     s_dataType,
                     sizeof(s_dataType));
@@ -1647,7 +1665,77 @@ void SQLTxn_OnColumnInfoFetched(Database db, any data, int numQueries, DBResultS
     QSR_LogMessage(MODULE_NAME,
                    "SUCCESSFULLY CREATED COLUMN LISTS. MOVING TO CREATE TABLE DUMPS");
     Internal_SendDBTransaction(
-        SQLTxn_OnTableFetchedForDump, 
+        SQLTxn_Update_OnTableFetchedForDump, 
+        SQLTxn_OnFailedToFetchTableForDump,
+        _,
+        DBPrio_High);
+    gH_DBTransaction = null;
+}
+
+void SQLTxn_OnColumnInfoFetched(Database db, any data, int numQueries, DBResultSet[] results, QSRDBTable[] queryData)
+{
+    char s_tableName[64],
+         s_columnName[64],
+         s_dataType[64],
+         s_query[MAX_QUERY_LENGTH];
+
+    gH_DBTransaction = new Transaction();
+    for (int i; i < numQueries; i++) {
+        Internal_GetTableName(queryData[i],
+                              s_tableName,
+                              sizeof(s_tableName));
+
+        ArrayList h_tableColumnList = new ArrayList();
+        while (results[i].FetchRow()) {
+            results[i].FetchString(0,
+                    s_columnName,
+                    sizeof(s_columnName));
+            if (StrEqual(s_columnName, "id"))
+                continue;
+            results[i].FetchString(1,
+                    s_dataType,
+                    sizeof(s_dataType));
+
+            // Keep all column names lowercase
+            for (int letter; letter < sizeof(s_columnName); letter++)
+                s_columnName[letter] = CharToLower(s_columnName[letter]);
+
+            StringMap h_columnInfo = new StringMap();
+            h_columnInfo.SetString(SQL_COLUMN_NAME_KEY, s_columnName);
+            h_columnInfo.SetString(SQL_COLUMN_DATA_TYPE_KEY, s_dataType);
+            h_columnInfo.SetString(SQL_TABLE_NAME_KEY, s_tableName);
+
+            h_tableColumnList.Push(h_columnInfo);
+        } // End of while loop
+
+        if (!Internal_CreateSelectQueryForUnknownColumns(s_query, sizeof(s_query), h_tableColumnList)) {
+            QSR_LogMessage(MODULE_NAME,
+                          "WARNING: Could not create SELECT query for table %s (possibly empty or no columns found)",
+                          s_tableName);
+            continue;
+        }
+
+        if (gB_logTransactions)
+            QSR_SilentLogLarge(MODULE_NAME,
+                          "QUERY:\n%s",
+                           s_query);
+
+        DataPack h_tableInfo = new DataPack();
+        h_tableInfo.WriteCell(QSR_GetTableFromName(s_tableName));
+        ReplaceString(s_tableName,
+                      sizeof(s_tableName),
+                      "PLREPLACE",
+                      gS_subserver,
+                      false);
+        h_tableInfo.WriteString(s_tableName);
+        h_tableInfo.WriteCell(h_tableColumnList);
+        gH_DBTransaction.AddQuery(s_query, h_tableInfo);
+    } // end of loop to parse all queries
+
+    QSR_LogMessage(MODULE_NAME,
+                   "SUCCESSFULLY CREATED COLUMN LISTS. MOVING TO CREATE TABLE DUMPS");
+    Internal_SendDBTransaction(
+        SQLTxn_Update_OnTableFetchedForDump, 
         SQLTxn_OnFailedToFetchTableForDump,
         _,
         DBPrio_High);
@@ -1665,7 +1753,7 @@ void SQLTxn_FailedToFetchColumnInfo(Database db, any data, int numQueries, const
         error);
 }
 
-void SQLTxn_OnTableFetchedForDump(Database db, any data, int numQueries, DBResultSet[] results, DataPack[] tableInfo)
+void SQLTxn_Update_OnTableFetchedForDump(Database db, any data, int numQueries, DBResultSet[] results, DataPack[] tableInfo)
 {
     bool b_endOfList;
     char s_tableName[64],
@@ -1725,7 +1813,7 @@ void SQLTxn_OnTableFetchedForDump(Database db, any data, int numQueries, DBResul
 
         h_sqlDumpFile.WriteString(s_line, false);
 
-        // Add column names to the INSERT statement (only once, before processing rows)
+        // Add column names to the INSERT statement (once, to process columns for the whole table for the insert and the on duplicate key statement
         for (int j; j < h_columnList.Length; j++) {
             b_endOfList = (j == h_columnList.Length - 1);
             StringMap h_columnInfo = view_as<StringMap>(h_columnList.Get(j));
@@ -1752,6 +1840,7 @@ void SQLTxn_OnTableFetchedForDump(Database db, any data, int numQueries, DBResul
                 h_sqlDumpFile.WriteString(s_line, false);
             }
         } // End of adding columns to query
+
 
         bool b_firstRow = true;
         while (results[i].FetchRow()) {
@@ -1840,37 +1929,30 @@ void SQLTxn_OnTableFetchedForDump(Database db, any data, int numQueries, DBResul
                             "UNKNOWN DATA TYPE ENCOUNTERED FOR COLUMN: `%s` IN TABLE `quasar`.`%s`",
                             s_columnName,
                             s_tableName);
+                        continue;
                     }
                 } // End of switch statement
             } // End of 2nd for loop (Parsed all columns for current row)
-
-            // Set up statement to handle duplicates upon insert
-            FormatEx(s_line,
-                     sizeof(s_line),
-                     "\nON DUPLICATE KEY UPDATE\n");
-            h_sqlDumpFile.WriteLine(s_line);
-
-            for (int j; j < h_columnList.Length; j++) {
-                FormatEx(s_columnKey,
-                         sizeof(s_columnKey),
-                         "%s_%d",
-                         SQL_COLUMN_NAME_KEY,
-                         j);
-                StringMap h_columnInfo = view_as<StringMap>(h_columnList.Get(j));
-                h_columnInfo.GetString(s_columnKey, s_columnKey, sizeof(s_columnKey));
-                FormatEx(s_line,
-                         sizeof(s_line),
-                         "\t`%s` = VALUES(`%s`)\n",
-                         s_columnKey,
-                         s_columnKey,
-                         (j < h_columnList.Length - 1) ? "," : "");
-                h_sqlDumpFile.WriteLine(s_line);
-            }
-
+ 
+            // Added all values to the query.
             h_columnValues.Close();
         } // End of while loop (Parsed each row for current table)
 
-        h_sqlDumpFile.WriteLine(";");
+        // Set up statement to handle duplicates upon insert 
+        h_sqlDumpFile.WriteLine("\nON DUPLICATE KEY UPDATE ");
+        for (int j; j < h_columnList.Length; j++) { 
+            StringMap h_columnInfo = view_as<StringMap>(h_columnList.Get(j));
+            h_columnInfo.GetString(SQL_COLUMN_NAME_KEY, s_columnName, sizeof(s_columnName));
+            FormatEx(s_line,
+                     sizeof(s_line),
+                     "\t`%s` = VALUES(`%s`)%s",
+                     s_columnName,
+                     s_columnName,
+                     (j < h_columnList.Length - 1) ? "," : "");
+            h_sqlDumpFile.WriteLine(s_line);
+        }
+
+        h_sqlDumpFile.WriteString(";\n", false);
         if (h_sqlDumpFile != null) {
             h_sqlDumpFile.Flush();
             h_sqlDumpFile.Close();

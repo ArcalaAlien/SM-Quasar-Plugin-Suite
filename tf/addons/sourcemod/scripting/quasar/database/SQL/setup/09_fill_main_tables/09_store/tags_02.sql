@@ -1,5 +1,5 @@
 -- ?14
-REPLACE INTO `quasar`.`tags` (`item_id`, `name`, `display`, `creator_id`, `price`) VALUES
+INSERT INTO `quasar`.`tags` (`item_id`, `name`, `display`, `creator_id`, `price`) VALUES
 ('tag_greg', 'Greg', 'Greg', 'QUASAR', 750),
 ('tag_hart', 'Heart', '<3', 'QUASAR', 2000),
 ('tag_hipp', 'Hippie', 'Hippie', 'QUASAR', 1000),

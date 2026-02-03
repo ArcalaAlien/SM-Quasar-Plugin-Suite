@@ -1,5 +1,5 @@
 -- ?13
-REPLACE INTO `quasar`.`trails` (`item_id`, `name`, `vtf_filepath`, `vmt_filepath`, `creator_id`, `price`) VALUES
+INSERT INTO `quasar`.`trails` (`item_id`, `name`, `vtf_filepath`, `vmt_filepath`, `creator_id`, `price`) VALUES
 ('trl_mdrl', 'Mandrill', 'quasar/trails/mandrill.vtf', 'quasar/trails/mandrill.vmt', 'QUASAR', 250),
 ('trl_mkpl', 'Markiplier FNAF', 'quasar/trails/markiplier.vtf', 'quasar/trails/markiplier.vmt', 'QUASAR', 750),
 ('trl_mnon', 'Minions', 'quasar/trails/minions.vtf', 'quasar/trails/minions.vmt', 'QUASAR', 750),

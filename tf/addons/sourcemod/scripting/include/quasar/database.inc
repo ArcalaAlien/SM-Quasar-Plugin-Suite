@@ -6,9 +6,14 @@
 #undef MODULE_NAME
 #define MODULE_NAME "Database"
 
-#define DATABASE_VERSION    "QSRDB_V0.3.1"
+#define DATABASE_VERSION "QSRDB_V0.3.1"
 /*
     VERSION 0.3.1:
+        * Fixed SQL styling in inventory_view.sql
+            to make it more consistent with the rest of the project.
+        * Changed all REPLACE INTO 
+            statements to INSERT INTO statements
+
         Changed update database functionality:
         * Now runs through the entire create database
           process, including inserting all default values.

@@ -1,5 +1,5 @@
 -- ?17
-REPLACE INTO `quasar`.`chat_colors` (`format`, `name`, `category`) VALUES
+INSERT INTO `quasar`.`chat_colors` (`format`, `name`, `category`) VALUES
 ('gray', 'Gray', 'Greyscale'),
 ('dimgray', 'Dim Gray', 'Greyscale'),
 ('lightgray', 'Light Gray', 'Greyscale'),

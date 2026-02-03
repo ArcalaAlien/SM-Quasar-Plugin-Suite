@@ -1,5 +1,5 @@
 -- ?1
-REPLACE INTO `quasar`.`tf_classes` (`id`, `name`) VALUES
+INSERT INTO `quasar`.`tf_classes` (`id`, `name`) VALUES
 (1, 'Scout'),
 (2, 'Soldier'),
 (3, 'Pyro'),

@@ -1,5 +1,5 @@
 -- ?9
-REPLACE INTO `quasar`.`rank_titles` (`rank_id`, `name`, `display`, `point_target`, `afk_rank`) VALUES
+INSERT INTO `quasar`.`rank_titles` (`rank_id`, `name`, `display`, `point_target`, `afk_rank`) VALUES
 ('rnk_newb', 'Newbie', '{red}Newbie', 0, DEFAULT),
 ('rnk_begn', 'Beginner', '{orange}Beginner', 3000, DEFAULT),
 ('rnk_rglr', 'Regular', '{yellow}Regular', 6000, DEFAULT),

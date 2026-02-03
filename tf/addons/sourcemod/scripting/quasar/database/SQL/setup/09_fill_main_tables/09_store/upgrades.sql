@@ -1,5 +1,5 @@
 -- ?15
-REPLACE INTO `quasar`.`upgrades` (`item_id`, `name`, `description`, `creator_id`, `price`) VALUES
+INSERT INTO `quasar`.`upgrades` (`item_id`, `name`, `description`, `creator_id`, `price`) VALUES
 ('ugd_ccht', 'Colored Chat', 'Color your chat using colors provided by our palettes!', 'QUASAR', 5000),
 ('ugd_cnme', 'Colored Name', 'Color your name using colors provided by our palettes!', 'QUASAR', 5000),
 ('ugd_nknm', 'Nickname', 'Set your name to something custom! You can even put colors in it provided you bought the Chat Formatting upgrade!', 'QUASAR', 5000),
